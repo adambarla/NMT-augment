@@ -1,1 +1,5 @@
 **/.fleet/*
+**/outputs/*
+**/.DS_Store
+**/__pycache__/*
+**/wandb/*

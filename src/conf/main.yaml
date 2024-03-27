@@ -1,0 +1,8 @@
+wandb:
+    entity: crutch
+    project: "Data Augmentation for Neural Machine Translation"
+
+name: null # if null, it will be assigned automatically as time
+group: null # todo: change automatic selection of run group
+
+seed: 42

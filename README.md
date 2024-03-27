@@ -15,7 +15,7 @@ pip install -r requirements.txt
 
 ```bash
 cd src
-python -m training.py
+python -m training
 ```
 
 For changing hyperparameters we used [hydra](https://hydra.cc/docs/intro/). To change configuration you can for example run.
