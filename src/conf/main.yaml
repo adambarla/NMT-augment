@@ -1,8 +1,20 @@
+defaults:
+    - _self_
+
+data:
+    name: wmt14
+    lang: cs-en # available 'cs-en', 'de-en', 'fr-en', 'hi-en', 'ru-en'
+    dir: './data'
+
 wandb:
     entity: crutch
     project: "Data Augmentation for Neural Machine Translation"
+
+batch_size: 32
+max_length: 512
 
 name: null # if null, it will be assigned automatically as time
 group: null # todo: change automatic selection of run group
 
 seed: 42
+

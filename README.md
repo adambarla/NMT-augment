@@ -8,7 +8,7 @@ This project seeks to address a critical issue in the field of machine translati
 
 Use python `3.9.18` in your prefered environment and run
 ```
-pip install -r requirements.txt
+pip install -r src/requirements.txt
 ```
 
 ## Training
@@ -23,3 +23,11 @@ For changing hyperparameters we used [hydra](https://hydra.cc/docs/intro/). To c
 ```bash
 python -m training.py lr=0.001
 ```
+
+## Data
+
+WMT 2014 English-to-German. WMT 2014 is a collec-
+tion of datasets used in shared tasks of the Ninth Workshop
+on Statistical Machine Translation. WMT 2014 English-to-
+German is one of the most common datasets from WMT
+2014 for machine translation
