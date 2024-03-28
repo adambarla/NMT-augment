@@ -25,7 +25,9 @@ def main(cfg):
     print(f"Tokenizer:\n{tokenizer}")
     model = hydra.utils.instantiate(cfg.model)
     print(f"Model:\n{model}")
-
+    # todo: freeze model parameters if pretrained
+    optimizer = hydra.utils.instantiate(cfg.optimizer, model.parameters())
+    print(f"Optimizer:\n{optimizer}")
     train_loader, val_loader, test_loader = get_dataloaders(cfg, tokenizer)
 
     train_loader, val_loader, test_loader = accelerator.prepare(train_loader, val_loader, test_loader)
