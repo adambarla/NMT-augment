@@ -4,7 +4,7 @@ In the global landscape of today, effective communication across languages is es
 
 This project seeks to address a critical issue in the field of machine translation: the data scarcity for low-resource languages. We aim to evaluate and compare different data augmentation strategies, specifically focusing on improving machine translation for these underrepresented languages.
 
-## Instalation
+## Installation
 
 Use python `3.9.18` in your preferred environment and run
 ```
@@ -29,6 +29,5 @@ We use [Accelerate](https://huggingface.co/docs/accelerate/en/index) to leverage
 
 ## Data
 
-WMT 2014 English-to-German. WMT 2014 is a collection of datasets used in shared tasks of the Ninth Workshop
-on Statistical Machine Translation. WMT 2014 English-to-German is one of the most common datasets from WMT
+WMT 2014 English-to-German. WMT 2014 is a collection of datasets used in shared tasks of the Ninth Workshop on Statistical Machine Translation. WMT 2014 English-to-German is one of the most common datasets from WMT
 2014 for machine translation
