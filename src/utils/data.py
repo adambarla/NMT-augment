@@ -38,15 +38,15 @@ def get_dataloaders(cfg, tokenizer):
 
 def collate_fn(batch, tokenizer, max_length, l1, l2):
     src_batch, tgt_batch = [], []
-    for item in batch["translation"]:
+    for item in batch:
         src_batch.append(
             tokenizer.encode(
-                item[l1], truncation=True, padding="max_length", max_length=max_length
+                item["translation"][l1], truncation=True, padding="max_length", max_length=max_length
             )
         )
         tgt_batch.append(
             tokenizer.encode(
-                item[l2], truncation=True, padding="max_length", max_length=max_length
+                item["translation"][l2], truncation=True, padding="max_length", max_length=max_length
             )
         )
     src_batch = pad_sequence(
