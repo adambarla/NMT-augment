@@ -6,13 +6,12 @@ from omegaconf import OmegaConf
 
 @hydra.main(version_base=None, config_path="conf", config_name="main")
 def main(cfg):
-    print(f"Hydra configuration:\n{OmegaConf.to_yaml(cfg)}")
+    print(f'Hydra configuration:\n{OmegaConf.to_yaml(cfg)}')
     set_deterministic(cfg.seed)
     init_wandb(cfg)
-
-    tokenizer = BertTokenizer.from_pretrained(
-        "bert-base-multilingual-cased"
-    )  # todo: change to hydrainstantiable
+    # instantiate objects from configs
+    tokenizer = hydra.utils.instantiate(cfg.tokenizer)
+    print(f'Tokenizer:\n{tokenizer}')
     train_loader, val_loader, test_loader = get_dataloaders(cfg, tokenizer)
 
 
