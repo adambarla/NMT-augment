@@ -12,6 +12,8 @@ def main(cfg):
     # instantiate objects from configs
     tokenizer = hydra.utils.instantiate(cfg.tokenizer)
     print(f"Tokenizer:\n{tokenizer}")
+    model = hydra.utils.instantiate(cfg.model)
+    print(f"Model:\n{model}")
     train_loader, val_loader, test_loader = get_dataloaders(cfg, tokenizer)
 
 

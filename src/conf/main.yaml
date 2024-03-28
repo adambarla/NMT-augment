@@ -1,6 +1,7 @@
 defaults:
     - _self_
-    - tokenizer: bert
+    - tokenizer: roberta
+    - model: roberta
 data:
     name: wmt14
     lang: cs-en # available 'cs-en', 'de-en', 'fr-en', 'hi-en', 'ru-en'
