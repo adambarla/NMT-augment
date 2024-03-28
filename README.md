@@ -25,6 +25,8 @@ python -m training.py data.lang="de-en"
 ```
 Same goes for all other parameter defined in `src/conf/`.
 
+We use [Accelerate](https://huggingface.co/docs/accelerate/en/index) to leverage hardware accelerators for mixed precision training, gradient accumulation, and logging with [Weights & Biases](https://wandb.ai/site) (wandb). The Accelerator object is instantiated with the desired settings, e.g., `accelerator = Accelerator(mixed_precision='fp16', log_with='wandb')`.
+
 ## Data
 
 WMT 2014 English-to-German. WMT 2014 is a collection of datasets used in shared tasks of the Ninth Workshop
