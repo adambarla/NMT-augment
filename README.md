@@ -18,16 +18,15 @@ cd src
 python -m training
 ```
 
-For changing hyperparameters we used [hydra](https://hydra.cc/docs/intro/). To change configuration you can for example run.
+For changing hyperparameters we used [hydra](https://hydra.cc/docs/intro/). For example, to change the languages the model trains on, you can run:
 
 ```bash
-python -m training.py lr=0.001
+python -m training.py data.lang="de-en"
 ```
+Same goes for all other parameter defined in `src/conf/`.
 
 ## Data
 
-WMT 2014 English-to-German. WMT 2014 is a collec-
-tion of datasets used in shared tasks of the Ninth Workshop
-on Statistical Machine Translation. WMT 2014 English-to-
-German is one of the most common datasets from WMT
+WMT 2014 English-to-German. WMT 2014 is a collection of datasets used in shared tasks of the Ninth Workshop
+on Statistical Machine Translation. WMT 2014 English-to-German is one of the most common datasets from WMT
 2014 for machine translation
