@@ -41,12 +41,18 @@ def collate_fn(batch, tokenizer, max_length, l1, l2):
     for item in batch:
         src_batch.append(
             tokenizer.encode(
-                item["translation"][l1], truncation=True, padding="max_length", max_length=max_length
+                item["translation"][l1],
+                truncation=True,
+                padding="max_length",
+                max_length=max_length,
             )
         )
         tgt_batch.append(
             tokenizer.encode(
-                item["translation"][l2], truncation=True, padding="max_length", max_length=max_length
+                item["translation"][l2],
+                truncation=True,
+                padding="max_length",
+                max_length=max_length,
             )
         )
     src_batch = pad_sequence(

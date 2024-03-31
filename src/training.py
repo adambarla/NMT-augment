@@ -13,7 +13,7 @@ from accelerate import Accelerator
 
 
 def epoch_train(
-        model, loader, optimizer, criterion, device, accelerator, scheduler=None
+    model, loader, optimizer, criterion, device, accelerator, scheduler=None
 ):
     epoch_loss = 0.0
 
@@ -23,8 +23,8 @@ def epoch_train(
         inputs, targets = batch
         inputs = inputs.to(device)
         targets = targets.to(device)
-        outputs = model(inputs,targets[:-1,:])
-        loss = criterion(outputs, targets[1:,:])
+        outputs = model(inputs, targets[:-1, :])
+        loss = criterion(outputs, targets[1:, :])
         accelerator.backward(loss)
         optimizer.step()
         # todo: add scheduler
@@ -43,42 +43,42 @@ def epoch_evaluate(model, loader, criterion, device, accelerator):
             inputs, targets = batch
             inputs = inputs.to(device)
             targets = targets.to(device)
-            outputs = model(inputs,targets[:-1,:])
-            loss = criterion(outputs, targets[1:,:])
+            outputs = model(inputs, targets[:-1, :])
+            loss = criterion(outputs, targets[1:, :])
             epoch_loss += accelerator.gather(loss.item())
 
     return epoch_loss.mean().item()
 
 
 def train(
-        device,
-        model,
-        optimizer,
-        criterion,
-        accelerator,
-        n_epochs,
-        train_loader,
-        val_loader,
-        test_loader
+    device,
+    model,
+    optimizer,
+    criterion,
+    accelerator,
+    n_epochs,
+    train_loader,
+    val_loader,
+    test_loader,
 ):
     with tqdm(total=n_epochs, desc="Training Progress") as pbar:
         for epoch in range(n_epochs):
             # todo: add scheduler
             train_loss = epoch_train(
-                model, train_loader, optimizer, criterion, device, accelerator, scheduler=None
+                model,
+                train_loader,
+                optimizer,
+                criterion,
+                device,
+                accelerator,
+                scheduler=None,
             )
             valid_loss = epoch_evaluate(model, val_loader, criterion, device)
             pbar.set_description(
-                f"Train Loss: {train_loss:.3f}"
-                f" |  Val. Loss: {valid_loss:.3f} "
+                f"Train Loss: {train_loss:.3f}" f" |  Val. Loss: {valid_loss:.3f} "
             )
             pbar.update(1)
-            wandb.log(
-                {
-                    "train_loss": train_loss,
-                    "valid_loss": valid_loss
-                }
-            )
+            wandb.log({"train_loss": train_loss, "valid_loss": valid_loss})
     test_loss = epoch_evaluate(model, test_loader, criterion, device)
     print(f" Test Loss: {test_loss:.3f} ")
     wandb.log({"test_loss": test_loss})
@@ -90,7 +90,7 @@ def main(cfg):
     set_deterministic(cfg.seed)
     init_wandb(cfg)  # TODO
     accelerator = Accelerator(
-        mixed_precision='no',
+        mixed_precision="no",
         gradient_accumulation_steps=1,
         log_with="wandb",
         # logging_dir="logs" # unexpected argument?
@@ -101,10 +101,12 @@ def main(cfg):
     cfg.tgt_vocab_size = tokenizer.vocab_size
     print(f"Tokenizer:\n{tokenizer}")
     train_loader, val_loader, test_loader = get_dataloaders(cfg, tokenizer)
-    train_loader, val_loader, test_loader = accelerator.prepare(train_loader, val_loader, test_loader)
-    model = hydra.utils.instantiate(cfg.model,
-                                    device=device,
-                                    pad_token=tokenizer.pad_token_id)
+    train_loader, val_loader, test_loader = accelerator.prepare(
+        train_loader, val_loader, test_loader
+    )
+    model = hydra.utils.instantiate(
+        cfg.model, device=device, pad_token=tokenizer.pad_token_id
+    )
     model.to(device)
     print(f"Model:\n{model}")
     # todo: freeze model parameters if pretrained
