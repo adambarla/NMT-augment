@@ -23,8 +23,8 @@ def epoch_train(
         inputs, targets = batch
         inputs = inputs.to(device)
         targets = targets.to(device)
-        outputs = model(inputs)
-        loss = criterion(outputs, targets)
+        outputs = model(inputs,targets[:-1,:])
+        loss = criterion(outputs, targets[1:,:])
         accelerator.backward(loss)
         optimizer.step()
         # todo: add scheduler
@@ -43,8 +43,8 @@ def epoch_evaluate(model, loader, criterion, device, accelerator):
             inputs, targets = batch
             inputs = inputs.to(device)
             targets = targets.to(device)
-            outputs = model(inputs)
-            loss = criterion(outputs, targets)
+            outputs = model(inputs,targets[:-1,:])
+            loss = criterion(outputs, targets[1:,:])
             epoch_loss += accelerator.gather(loss.item())
 
     return epoch_loss.mean().item()
@@ -97,15 +97,20 @@ def main(cfg):
     )
     device = get_device(cfg)
     tokenizer = hydra.utils.instantiate(cfg.tokenizer)
+    cfg.src_vocab_size = tokenizer.vocab_size
+    cfg.tgt_vocab_size = tokenizer.vocab_size
     print(f"Tokenizer:\n{tokenizer}")
-    model = hydra.utils.instantiate(cfg.model)
+    train_loader, val_loader, test_loader = get_dataloaders(cfg, tokenizer)
+    train_loader, val_loader, test_loader = accelerator.prepare(train_loader, val_loader, test_loader)
+    model = hydra.utils.instantiate(cfg.model,
+                                    device=device,
+                                    pad_token=tokenizer.pad_token_id)
     model.to(device)
     print(f"Model:\n{model}")
     # todo: freeze model parameters if pretrained
     optimizer = hydra.utils.instantiate(cfg.optimizer, model.parameters())
     print(f"Optimizer:\n{optimizer}")
-    train_loader, val_loader, test_loader = get_dataloaders(cfg, tokenizer)
-    train_loader, val_loader, test_loader = accelerator.prepare(train_loader, val_loader, test_loader)
+
     criterion = None  # todo: add criterion
     train(
         device,
