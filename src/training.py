@@ -41,7 +41,7 @@ def epoch_train(
             epoch_loss += accelerator.gather(loss.item())
             pbar.set_description(f"Train Loss: {epoch_loss/(i+1.0):.3f}")
             pbar.update(1)
-    return epoch_loss.mean().item()
+    return epoch_loss / len(loader)
 
 
 def epoch_evaluate(model, loader, criterion, device, accelerator):
@@ -61,7 +61,7 @@ def epoch_evaluate(model, loader, criterion, device, accelerator):
                 epoch_loss += accelerator.gather(loss.item())
                 pbar.set_description(f"Validation Loss: {epoch_loss/(i+1.0):.3f}")
                 pbar.update(1)
-    return epoch_loss.mean().item()
+    return epoch_loss / len(loader)
 
 
 def train(
