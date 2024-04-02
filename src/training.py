@@ -7,13 +7,19 @@ import torch
 import wandb
 from tqdm import tqdm
 
-from utils import init_wandb, set_deterministic, get_dataloaders, get_device, get_dataset
+from utils import (
+    init_wandb,
+    set_deterministic,
+    get_dataloaders,
+    get_device,
+    get_dataset,
+)
 from omegaconf import OmegaConf
 from accelerate import Accelerator
 
 
 def epoch_train(
-        model, loader, optimizer, criterion, device, accelerator, scheduler=None
+    model, loader, optimizer, criterion, device, accelerator, scheduler=None
 ):
     epoch_loss = 0.0
 
@@ -25,7 +31,9 @@ def epoch_train(
             inputs = inputs.to(device)
             targets = targets.to(device)
             outputs = model(inputs, targets[:-1, :])
-            loss = criterion(outputs.reshape(-1, outputs.shape[-1]), targets[1:, :].reshape(-1))
+            loss = criterion(
+                outputs.reshape(-1, outputs.shape[-1]), targets[1:, :].reshape(-1)
+            )
             accelerator.backward(loss)
             optimizer.step()
             # todo: add scheduler
@@ -47,7 +55,9 @@ def epoch_evaluate(model, loader, criterion, device, accelerator):
                 inputs = inputs.to(device)
                 targets = targets.to(device)
                 outputs = model(inputs, targets[:-1, :])
-                loss = criterion(outputs.reshape(-1, outputs.shape[-1]), targets[1:, :].reshape(-1))
+                loss = criterion(
+                    outputs.reshape(-1, outputs.shape[-1]), targets[1:, :].reshape(-1)
+                )
                 epoch_loss += accelerator.gather(loss.item())
                 pbar.set_description(f"Validation Loss: {epoch_loss/(i+1.0):.3f}")
                 pbar.update(1)
@@ -55,15 +65,15 @@ def epoch_evaluate(model, loader, criterion, device, accelerator):
 
 
 def train(
-        device,
-        model,
-        optimizer,
-        criterion,
-        accelerator,
-        n_epochs,
-        train_loader,
-        val_loader,
-        test_loader,
+    device,
+    model,
+    optimizer,
+    criterion,
+    accelerator,
+    n_epochs,
+    train_loader,
+    val_loader,
+    test_loader,
 ):
     for epoch in range(n_epochs):
         # todo: add scheduler
