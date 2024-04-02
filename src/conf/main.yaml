@@ -1,8 +1,9 @@
 defaults:
     - _self_
-    - tokenizer: roberta
+    - tokenizer: character
     - model: seq2seq
     - optimizer: adamw
+    - criterion: crossentropy
 data:
     name: wmt14
     lang: cs-en # available 'cs-en', 'de-en', 'fr-en', 'hi-en', 'ru-en'
