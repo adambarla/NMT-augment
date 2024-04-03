@@ -2,7 +2,7 @@ _target_: model.seq2seq.Seq2Seq
 transformer:
     _target_: torch.nn.Transformer
     d_model: ${emb_size} 
-    dim_feedforward: 515 # hidden embedding size
+    dim_feedforward: 512 # hidden embedding size
     nhead: 8
     num_encoder_layers: 3
     num_decoder_layers: 3

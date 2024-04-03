@@ -24,6 +24,8 @@ class Seq2Seq(nn.Module):
         self.pad_token = pad_token
 
     def forward(self, src: Tensor, tgt: Tensor):
+        # src: Length x Batch
+        # tgt: (L-1) x B
         src_emb = self.positional_encoding(self.src_tok_emb(src))
         tgt_emb = self.positional_encoding(self.tgt_tok_emb(tgt))
         src_mask, tgt_mask, src_padding_mask, tgt_padding_mask = self.create_mask(

@@ -28,8 +28,9 @@ def epoch_train(
         for i, batch in enumerate(loader):
             optimizer.zero_grad()
             inputs, targets = batch
-            inputs = inputs.to(device)
-            targets = targets.to(device)
+            inputs = inputs.transpose(0,1).to(device)
+            targets = targets.transpose(0,1).to(device)
+
             outputs = model(inputs, targets[:-1, :])
             loss = criterion(
                 outputs.reshape(-1, outputs.shape[-1]), targets[1:, :].reshape(-1)
@@ -46,14 +47,13 @@ def epoch_train(
 
 def epoch_evaluate(model, loader, criterion, device, accelerator):
     epoch_loss = 0.0
-
     model.eval()
     with torch.no_grad():
         with tqdm(total=len(loader), desc="Training Progress") as pbar:
             for i, batch in enumerate(loader):
                 inputs, targets = batch
-                inputs = inputs.to(device)
-                targets = targets.to(device)
+                inputs = inputs.transpose(0,1).to(device)
+                targets = targets.transpose(0,1).to(device)
                 outputs = model(inputs, targets[:-1, :])
                 loss = criterion(
                     outputs.reshape(-1, outputs.shape[-1]), targets[1:, :].reshape(-1)
@@ -86,7 +86,7 @@ def train(
             accelerator,
             scheduler=None,
         )
-        valid_loss = epoch_evaluate(model, val_loader, criterion, device, accelerator)
+        valid_loss = epoch_evaluate(model, val_loader, criterion, device)
 
         wandb.log({"train_loss": train_loss, "valid_loss": valid_loss})
     test_loss = epoch_evaluate(model, test_loader, criterion, device, accelerator)
