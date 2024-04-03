@@ -86,7 +86,7 @@ def train(
             accelerator,
             scheduler=None,
         )
-        valid_loss = epoch_evaluate(model, val_loader, criterion, device)
+        valid_loss = epoch_evaluate(model, val_loader, criterion, device, accelerator)
 
         wandb.log({"train_loss": train_loss, "valid_loss": valid_loss})
     test_loss = epoch_evaluate(model, test_loader, criterion, device, accelerator)
