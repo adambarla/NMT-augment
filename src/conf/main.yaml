@@ -1,6 +1,8 @@
 defaults:
     - _self_
-    - tokenizer: character
+    - tokenizer:
+        - word
+        - character
     - model: seq2seq
     - optimizer: adamw
     - criterion: crossentropy
