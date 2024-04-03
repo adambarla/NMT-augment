@@ -31,16 +31,26 @@ def get_dataloaders(cfg, tokenizer, dataset):
         collate_fn, tokenizer=tokenizer, max_length=max_length, l1=l1, l2=l2
     )
 
-    train_dataloader = DataLoader(get_subset(cfg, dataset["train"]),
-                                  batch_size=batch_size,
-                                  collate_fn=col_fn_args,
-                                  pin_memory=True,
-                                  shuffle=True)
+    train_dataloader = DataLoader(
+        get_subset(cfg, dataset["train"]),
+        batch_size=batch_size,
+        collate_fn=col_fn_args,
+        pin_memory=True,
+        shuffle=True,
+    )
     val_dataloader = DataLoader(
-        dataset["validation"], batch_size=batch_size, collate_fn=col_fn_args, pin_memory=True, shuffle=False
+        dataset["validation"],
+        batch_size=batch_size,
+        collate_fn=col_fn_args,
+        pin_memory=True,
+        shuffle=False,
     )
     test_dataloader = DataLoader(
-        dataset["test"], batch_size=batch_size, collate_fn=col_fn_args, pin_memory=True, shuffle=False
+        dataset["test"],
+        batch_size=batch_size,
+        collate_fn=col_fn_args,
+        pin_memory=True,
+        shuffle=False,
     )
     dataloader_info = (
         f"DataLoaders are set up with the following configurations:\n"

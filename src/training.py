@@ -18,9 +18,7 @@ from omegaconf import OmegaConf
 from accelerate import Accelerator
 
 
-def epoch_train(
-        model, loader, optimizer, criterion, device, accelerator
-):
+def epoch_train(model, loader, optimizer, criterion, device, accelerator):
     epoch_loss = 0.0
 
     model.train()
@@ -59,26 +57,29 @@ def epoch_evaluate(model, loader, criterion, device, accelerator, tokenizer):
                 epoch_loss += accelerator.gather(loss.item())
                 pbar.set_description(f"Valid Loss: {epoch_loss / (i + 1.0):.3f}")
                 pbar.update(1)
-        translations = model.translate(inputs, max_length=inputs.shape[0]*1.05, context_size=inputs.shape[0])
+        translations = model.translate(
+            inputs, max_length=inputs.shape[0] * 1.05, context_size=inputs.shape[0]
+        )
         for i in range(3):
-            print(  f"\n\t input: {tokenizer.decode(inputs[:,i])[0]}\n"
-                    f"\ttarget: {tokenizer.decode(targets[:,i])[0]}\n"
-                    f"\toutput: {tokenizer.decode(translations[:,i])[0]}"
-                    )
+            print(
+                f"\n\t input: {tokenizer.decode(inputs[:,i])[0]}\n"
+                f"\ttarget: {tokenizer.decode(targets[:,i])[0]}\n"
+                f"\toutput: {tokenizer.decode(translations[:,i])[0]}"
+            )
     return epoch_loss / len(loader)
 
 
 def train(
-        device,
-        model,
-        optimizer,
-        criterion,
-        accelerator,
-        n_epochs,
-        train_loader,
-        val_loader,
-        test_loader,
-        tokenizer
+    device,
+    model,
+    optimizer,
+    criterion,
+    accelerator,
+    n_epochs,
+    train_loader,
+    val_loader,
+    test_loader,
+    tokenizer,
 ):
     for epoch in range(n_epochs):
         print(f"Epoch: {epoch + 1:>{len(str(n_epochs))}d}/{n_epochs}")
@@ -90,10 +91,14 @@ def train(
             device,
             accelerator,
         )
-        valid_loss = epoch_evaluate(model, val_loader, criterion, device, accelerator, tokenizer)
+        valid_loss = epoch_evaluate(
+            model, val_loader, criterion, device, accelerator, tokenizer
+        )
         wandb.log({"train_loss": train_loss, "valid_loss": valid_loss})
-        print('\n'+'-' * (len(str(n_epochs))*2+8))
-    test_loss = epoch_evaluate(model, test_loader, criterion, device, accelerator, tokenizer)
+        print("\n" + "-" * (len(str(n_epochs)) * 2 + 8))
+    test_loss = epoch_evaluate(
+        model, test_loader, criterion, device, accelerator, tokenizer
+    )
     print(f" Test Loss: {test_loss:.3f} ")
     wandb.log({"test_loss": test_loss})
 
@@ -125,7 +130,7 @@ def main(cfg):
         device=device,
         pad_token_id=tokenizer.pad_token_id,
         bos_token_id=tokenizer.bos_token_id,
-        eos_token_id=tokenizer.eos_token_id
+        eos_token_id=tokenizer.eos_token_id,
     )
     model.to(device)
     print(f"Model:\n{model}")
@@ -144,7 +149,7 @@ def main(cfg):
         train_loader,
         val_loader,
         test_loader,
-        tokenizer
+        tokenizer,
     )
 
 

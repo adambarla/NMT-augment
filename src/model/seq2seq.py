@@ -5,17 +5,17 @@ from torch import nn, Tensor
 
 class Seq2Seq(nn.Module):
     def __init__(
-            self,
-            src_tok_emb,
-            tgt_tok_emb,
-            positional_encoding,
-            transformer,
-            generator,
-            device,
-            pad_token_id,
-            bos_token_id,
-            eos_token_id,
-            **kwargs
+        self,
+        src_tok_emb,
+        tgt_tok_emb,
+        positional_encoding,
+        transformer,
+        generator,
+        device,
+        pad_token_id,
+        bos_token_id,
+        eos_token_id,
+        **kwargs
     ):
         super(Seq2Seq, self).__init__()
         self.transformer = transformer
@@ -61,7 +61,12 @@ class Seq2Seq(nn.Module):
 
     def translate(self, input, max_length=torch.inf, context_size=None):
         i = 0
-        output = torch.ones(1, input.shape[1]).fill_(self.bos_token).type(torch.long).to(self.device)
+        output = (
+            torch.ones(1, input.shape[1])
+            .fill_(self.bos_token)
+            .type(torch.long)
+            .to(self.device)
+        )
         finished = torch.zeros(input.shape[1]).bool().to(self.device)
         while i < max_length:
             i += 1
@@ -69,12 +74,12 @@ class Seq2Seq(nn.Module):
             logits = self.forward(input, context)
             logits = logits[-1, :, :]
             probs = F.softmax(logits, dim=-1)
-            output_next = torch.multinomial(probs, num_samples=1).transpose(0,1)
+            output_next = torch.multinomial(probs, num_samples=1).transpose(0, 1)
             output = torch.cat([output, output_next], dim=0)
             # Update finished mask where output_next is eos_token
-            finished |= (output_next.squeeze() == self.eos_token)
+            finished |= output_next.squeeze() == self.eos_token
             if finished.all():
-                break # Break if all sequences have received an EOS token
+                break  # Break if all sequences have received an EOS token
         return output
 
     def _generate_square_subsequent_mask(self, sz):

@@ -6,7 +6,6 @@ import numpy as np
 import torch
 
 
-
 def get_device(cfg):
     if cfg.device is not None:
         return torch.device(cfg.device)

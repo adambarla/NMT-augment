@@ -17,10 +17,10 @@ class CharacterTokenizer:
     def encode(
         self,
         x,
-        add_special_tokens: bool=True,
-        truncation: bool =True,
+        add_special_tokens: bool = True,
+        truncation: bool = True,
         padding="max_length",
-        max_length: int =None,
+        max_length: int = None,
     ):
         encoded = [self._stoi.get(c, self._stoi["<unk>"]) for c in x]
         if truncation and max_length is not None:
@@ -37,7 +37,10 @@ class CharacterTokenizer:
             x = x.tolist()
         if isinstance(x, list) and (not x or isinstance(x[0], int)):
             x = [x]
-        decoded = ["".join([self._itos[c] for c in seq if c not in special_token_ids]) for seq in x]
+        decoded = [
+            "".join([self._itos[c] for c in seq if c not in special_token_ids])
+            for seq in x
+        ]
         return decoded
 
     def _create_vocab(self, dataset):
