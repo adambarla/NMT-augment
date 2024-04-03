@@ -6,7 +6,7 @@ This project seeks to address a critical issue in the field of machine translati
 
 ## Installation
 
-Use python `3.9.18` in your preferred environment and run
+Use python `3.10.13` in your preferred environment and run
 ```
 pip install -r requirements.txt
 ```

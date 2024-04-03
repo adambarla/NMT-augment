@@ -9,7 +9,7 @@ def get_dataset(cfg):
     name = cfg.data.name
     lang = cfg.data.lang
     directory = cfg.data.dir
-    dataset = load_dataset(name, lang, cache_dir=directory, trust_remote_code=True)
+    dataset = load_dataset(name, lang, cache_dir=directory)
     return dataset
 
 
