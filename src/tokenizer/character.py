@@ -1,18 +1,26 @@
+import copy
+import torch
+
+
 class CharacterTokenizer:
     def __init__(self, dataset, **kwargs):
+        self.special_tokens = ["<s>", "<pad>", "</s>", "<unk>"]
         self.vocab = self._create_vocab(dataset)
         self._stoi = {c: i for i, c in enumerate(self.vocab)}
         self._itos = {i: c for i, c in enumerate(self.vocab)}
         self.vocab_size = len(self.vocab)
         self.pad_token_id = self._stoi["<pad>"]
+        self.bos_token_id = self._stoi["<s>"]
+        self.eos_token_id = self._stoi["</s>"]
+        self.unk_token_id = self._stoi["<unk>"]
 
     def encode(
         self,
         x,
-        add_special_tokens=True,
-        truncation=True,
+        add_special_tokens: bool=True,
+        truncation: bool =True,
         padding="max_length",
-        max_length=None,
+        max_length: int =None,
     ):
         encoded = [self._stoi.get(c, self._stoi["<unk>"]) for c in x]
         if truncation and max_length is not None:
@@ -24,7 +32,13 @@ class CharacterTokenizer:
         return encoded
 
     def decode(self, x):
-        return "".join([self._itos[c] for c in x])
+        special_token_ids = self.encode(self.special_tokens, add_special_tokens=False)
+        if isinstance(x, torch.Tensor):
+            x = x.tolist()
+        if isinstance(x, list) and (not x or isinstance(x[0], int)):
+            x = [x]
+        decoded = ["".join([self._itos[c] for c in seq if c not in special_token_ids]) for seq in x]
+        return decoded
 
     def _create_vocab(self, dataset):
         chars = set()
@@ -32,6 +46,6 @@ class CharacterTokenizer:
             for r in dataset[i]:
                 for t in r["translation"]:
                     chars.update(r["translation"][t])
-        vocab = ["<s>", "<pad>", "</s>", "<unk>"]
+        vocab = copy.deepcopy(self.special_tokens)
         vocab.extend(chars)
         return vocab
