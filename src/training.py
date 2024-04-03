@@ -59,7 +59,7 @@ def epoch_evaluate(model, loader, criterion, device, accelerator):
                     outputs.reshape(-1, outputs.shape[-1]), targets[1:, :].reshape(-1)
                 )
                 epoch_loss += accelerator.gather(loss.item())
-                pbar.set_description(f"Validation Loss: {epoch_loss/(i+1.0):.3f}")
+                pbar.set_description(f"Valid Loss: {epoch_loss/(i+1.0):.3f}")
                 pbar.update(1)
     return epoch_loss / len(loader)
 
@@ -89,7 +89,7 @@ def train(
         valid_loss = epoch_evaluate(model, val_loader, criterion, device, accelerator)
 
         wandb.log({"train_loss": train_loss, "valid_loss": valid_loss})
-    test_loss = epoch_evaluate(model, test_loader, criterion, device)
+    test_loss = epoch_evaluate(model, test_loader, criterion, device, accelerator)
     print(f" Test Loss: {test_loss:.3f} ")
     wandb.log({"test_loss": test_loss})
 
