@@ -1,1 +1,0 @@
-python -m training.py data.lang="de-en"

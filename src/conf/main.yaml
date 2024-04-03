@@ -1,8 +1,9 @@
 defaults:
     - _self_
-    - tokenizer: roberta
-    - model: roberta
+    - tokenizer: character
+    - model: seq2seq
     - optimizer: adamw
+    - criterion: crossentropy
 data:
     name: wmt14
     lang: cs-en # available 'cs-en', 'de-en', 'fr-en', 'hi-en', 'ru-en'
@@ -12,10 +13,15 @@ wandb:
     entity: crutch
     project: "Data Augmentation for Neural Machine Translation"
 
+emb_size: 512
+src_vocab_size: null
+tgt_vocab_size: null
+
 batch_size: 32
 max_length: 512
 lr: 0.001
 epochs: 100
+dropout: 0.1 # 0.1 is the default from the https://pytorch.org/tutorials/beginner/colab tutorial
 
 
 name: null # if null, it will be assigned automatically as time

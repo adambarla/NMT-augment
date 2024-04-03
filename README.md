@@ -8,7 +8,7 @@ This project seeks to address a critical issue in the field of machine translati
 
 Use python `3.9.18` in your preferred environment and run
 ```
-pip install -r src/requirements.txt
+pip install -r requirements.txt
 ```
 
 ## Training

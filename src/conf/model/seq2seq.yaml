@@ -1,0 +1,31 @@
+_target_: model.seq2seq.Seq2Seq
+transformer:
+    _target_: torch.nn.Transformer
+    d_model: ${emb_size} 
+    dim_feedforward: 512 # hidden embedding size
+    nhead: 8
+    num_encoder_layers: 3
+    num_decoder_layers: 3
+    dropout: ${dropout}
+
+
+
+src_tok_emb:
+    _target_: model.utils.embedding.TokenEmbedding
+    vocab_size: ${src_vocab_size}
+    emb_size: ${emb_size}
+    
+tgt_tok_emb:
+    _target_: model.utils.embedding.TokenEmbedding
+    vocab_size: ${tgt_vocab_size}
+    emb_size: ${emb_size}
+    
+positional_encoding:
+    _target_: model.utils.positional.PositionalEncoding
+    emb_size: ${emb_size}
+    dropout: ${dropout}
+
+generator:
+    _target_: torch.nn.Linear
+    in_features: ${emb_size}
+    out_features: ${tgt_vocab_size}
