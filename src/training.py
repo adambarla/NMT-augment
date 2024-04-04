@@ -41,7 +41,7 @@ def epoch_train(model, loader, optimizer, criterion, device, accelerator):
     return epoch_loss / len(loader)
 
 
-def epoch_evaluate(model, loader, criterion, device, accelerator, tokenizer):
+def epoch_evaluate(model, loader, criterion, device, accelerator, tokenizer, verbose_prev):
     epoch_loss = 0.0
     model.eval()
     inputs = targets = None
@@ -58,15 +58,16 @@ def epoch_evaluate(model, loader, criterion, device, accelerator, tokenizer):
                 epoch_loss += accelerator.gather(loss.item())
                 pbar.set_description(f"Valid Loss: {epoch_loss / (i + 1.0):.3f}")
                 pbar.update(1)
-        translations = model.translate(
-            inputs, max_length=inputs.shape[0] * 1.05, context_size=inputs.shape[0]
-        )
-        for i in range(3):
-            print(
-                f"\n\t input: {tokenizer.decode(inputs[:,i])[0]}\n"
-                f"\ttarget: {tokenizer.decode(targets[:,i])[0]}\n"
-                f"\toutput: {tokenizer.decode(translations[:,i])[0]}"
+        if verbose_prev:
+            translations = model.translate(
+                inputs, max_length=inputs.shape[0] * 1.05, context_size=inputs.shape[0]
             )
+            for i in range(3):
+                print(
+                    f"\n\t input: {tokenizer.decode(inputs[:,i])[0]}\n"
+                    f"\ttarget: {tokenizer.decode(targets[:,i])[0]}\n"
+                    f"\toutput: {tokenizer.decode(translations[:,i])[0]}"
+                )
     return epoch_loss / len(loader)
 
 
@@ -83,6 +84,7 @@ def train(
     tokenizer,
     save_weights,
     revision,
+    verbose_prev
 ):
     for epoch in range(n_epochs):
         print(f"Epoch: {epoch + 1:>{len(str(n_epochs))}d}/{n_epochs}")
@@ -95,7 +97,7 @@ def train(
             accelerator,
         )
         valid_loss = epoch_evaluate(
-            model, val_loader, criterion, device, accelerator, tokenizer
+            model, val_loader, criterion, device, accelerator, tokenizer, verbose_prev
         )
         wandb.log({"train_loss": train_loss, "valid_loss": valid_loss})
         print("\n" + "-" * (len(str(n_epochs)) * 2 + 8))
@@ -156,6 +158,7 @@ def main(cfg):
         tokenizer,
         cfg.save_weights,
         cfg.revision,
+        cfg.verbose_prev
     )
 
 
