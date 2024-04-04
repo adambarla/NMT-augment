@@ -2,6 +2,7 @@ from collections import Counter
 import torch
 import copy
 
+
 class WordTokenizer:
     def __init__(self, dataset, max_vocab_size=10000, min_freq=1, **kwargs):
         self.max_vocab_size = max_vocab_size
@@ -19,10 +20,10 @@ class WordTokenizer:
     def encode(
         self,
         x,
-        add_special_tokens: bool=True,
-        truncation: bool=True,
+        add_special_tokens: bool = True,
+        truncation: bool = True,
         padding="max_length",
-        max_length: int=None,
+        max_length: int = None,
     ):
         if isinstance(x, str):
             words = x.split()
@@ -46,7 +47,10 @@ class WordTokenizer:
             x = x.tolist()
         if isinstance(x, list) and (not x or isinstance(x[0], int)):
             x = [x]
-        decoded_text = [" ".join([self._itos[w] for w in seq if w not in special_token_ids]) for seq in x]
+        decoded_text = [
+            " ".join([self._itos[w] for w in seq if w not in special_token_ids])
+            for seq in x
+        ]
         return decoded_text
 
     def _create_vocab(self, dataset):
@@ -57,5 +61,11 @@ class WordTokenizer:
                     word_counts.update(r["translation"][t].split())
 
         vocab = copy.deepcopy(self.special_tokens)
-        vocab.extend([word for word, count in word_counts.most_common(self.max_vocab_size - 4) if count >= self.min_freq])
+        vocab.extend(
+            [
+                word
+                for word, count in word_counts.most_common(self.max_vocab_size - 4)
+                if count >= self.min_freq
+            ]
+        )
         return vocab
