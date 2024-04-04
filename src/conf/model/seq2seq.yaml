@@ -2,13 +2,11 @@ _target_: model.seq2seq.Seq2Seq
 transformer:
     _target_: torch.nn.Transformer
     d_model: ${emb_size} 
-    dim_feedforward: 512 # hidden embedding size
-    nhead: 8
-    num_encoder_layers: 3
-    num_decoder_layers: 3
+    dim_feedforward: 128 # hidden embedding size
+    nhead: 4
+    num_encoder_layers: 1
+    num_decoder_layers: 1
     dropout: ${dropout}
-
-
 
 src_tok_emb:
     _target_: model.utils.embedding.TokenEmbedding
