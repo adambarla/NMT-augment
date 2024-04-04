@@ -106,16 +106,13 @@ def main(cfg):
         # logging_dir="logs" # unexpected argument?
     )
     
-    device = get_device(cfg) #torch.device("cuda:1")
+    device = get_device(cfg)
     dataset = get_dataset(cfg)
     tokenizer = hydra.utils.instantiate(cfg.tokenizer, dataset=dataset)
     cfg.src_vocab_size = tokenizer.vocab_size
     cfg.tgt_vocab_size = tokenizer.vocab_size
     print(f"Tokenizer:\n{tokenizer}")
 
-    #added by me
-    print(f"my_Vocabulary size: {tokenizer.vocab_size}")
-    print(f"my_Pad token ID: {tokenizer.pad_token_id}")
 
     train_loader, val_loader, test_loader = get_dataloaders(cfg, tokenizer, dataset)
     train_loader, val_loader, test_loader = accelerator.prepare(

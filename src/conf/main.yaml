@@ -28,4 +28,4 @@ name: null # if null, it will be assigned automatically as time
 group: null # todo: change automatic selection of run group
 
 seed: 42
-device: "cuda:3" #null # if null auto cofiguration happens in this order based on availability: gpu, mps, cpu
+device: null # if null auto cofiguration happens in this order based on availability: gpu, mps, cpu

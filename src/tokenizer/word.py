@@ -10,9 +10,6 @@ class WordTokenizer:
         self.vocab_size = len(self.vocab)
         self.pad_token_id = self._stoi["<pad>"]
         self.unk_token_id = self._stoi["<unk>"]
-        print(f"Vocabulary size: {self.vocab_size}")
-        print(f"Pad token ID: {self.pad_token_id}")
-        print(f"Unknown token ID: {self.unk_token_id}")
 
     def encode(
         self,
@@ -34,7 +31,6 @@ class WordTokenizer:
 
     def decode(self, x):
         decoded_text = " ".join([self._itos.get(w, "<unk>") for w in x])
-        print(f"Decoded text: {decoded_text}")
         return decoded_text
 
     def _create_vocab(self, dataset):
