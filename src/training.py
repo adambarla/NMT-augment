@@ -13,7 +13,7 @@ from utils import (
     get_dataloaders,
     get_device,
     get_dataset,
-    save_checkpoint
+    save_checkpoint,
 )
 from omegaconf import OmegaConf
 from accelerate import Accelerator
@@ -82,7 +82,7 @@ def train(
     test_loader,
     tokenizer,
     save_weights,
-    revision
+    revision,
 ):
     for epoch in range(n_epochs):
         print(f"Epoch: {epoch + 1:>{len(str(n_epochs))}d}/{n_epochs}")
@@ -100,12 +100,13 @@ def train(
         wandb.log({"train_loss": train_loss, "valid_loss": valid_loss})
         print("\n" + "-" * (len(str(n_epochs)) * 2 + 8))
         if save_weights:
-          save_checkpoint(model, optimizer, epoch, revision)
+            save_checkpoint(model, optimizer, epoch, revision)
     test_loss = epoch_evaluate(
         model, test_loader, criterion, device, accelerator, tokenizer
     )
     print(f" Test Loss: {test_loss:.3f} ")
     wandb.log({"test_loss": test_loss})
+
 
 @hydra.main(version_base=None, config_path="conf", config_name="main")
 def main(cfg):
@@ -154,7 +155,7 @@ def main(cfg):
         test_loader,
         tokenizer,
         cfg.save_weights,
-        cfg.revision
+        cfg.revision,
     )
 
 
