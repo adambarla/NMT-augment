@@ -4,6 +4,7 @@ from datetime import datetime
 import random
 import numpy as np
 import torch
+import os
 
 
 def get_device(cfg):
@@ -34,3 +35,15 @@ def init_wandb(cfg):
         config=OmegaConf.to_container(cfg, resolve=True),
         reinit=True,
     )
+
+
+def save_checkpoint(model, optimizer, epoch, revision = 0):
+    checkpoint_dir = os.path.join("./outputs", "checkpoints", str(revision))
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    checkpoint_path = os.path.join(checkpoint_dir, f"checkpoint_{epoch}.pt")
+    torch.save({
+        "model_state_dict": model.state_dict(),
+        "optimizer_state_dict": optimizer.state_dict(),
+        "epoch": epoch
+    }, checkpoint_path)
+    print(f"Checkpoint saved at {checkpoint_path}")

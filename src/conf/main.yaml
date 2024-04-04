@@ -13,6 +13,9 @@ wandb:
     entity: crutch
     project: "Data Augmentation for Neural Machine Translation"
 
+save_weights: True
+revision: 0
+
 emb_size: 128
 src_vocab_size: null
 tgt_vocab_size: null
