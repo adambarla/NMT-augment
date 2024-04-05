@@ -15,7 +15,7 @@ from utils import (
 )
 from omegaconf import OmegaConf
 from accelerate import Accelerator
-
+from sacrebleu import corpus_bleu
 
 def epoch_train(model, loader, optimizer, criterion, device, accelerator):
     epoch_loss = 0.0
@@ -42,6 +42,10 @@ def epoch_train(model, loader, optimizer, criterion, device, accelerator):
 def epoch_evaluate(model, loader, criterion, device, accelerator, tokenizer):
     epoch_loss = 0.0
     model.eval()
+
+    hypotheses = []
+    references = []
+
     inputs = targets = None
     with torch.no_grad():
         with tqdm(total=len(loader), desc="Valid") as pbar:
@@ -56,14 +60,30 @@ def epoch_evaluate(model, loader, criterion, device, accelerator, tokenizer):
                 epoch_loss += accelerator.gather(loss.item())
                 pbar.set_description(f"Valid Loss: {epoch_loss / (i + 1.0):.3f}")
                 pbar.update(1)
-        translations = model.translate(inputs[:, :3], context_size=inputs.shape[0])
+
+                generated_seqs = model.translate(inputs, max_length=targets.size(0))
+                generated_texts = [tokenizer.decode(seq) for seq in generated_seqs.transpose(0, 1)]
+                target_texts = [[tokenizer.decode(seq)] for seq in targets.transpose(0, 1)]
+
+                hypotheses.extend(generated_texts)
+                references.extend(target_texts)
+
+
+        translations = model.translate(
+            inputs, max_length=inputs.shape[0] * 1.05, context_size=inputs.shape[0]
+        )
         for i in range(3):
             print(
                 f"\n input: {tokenizer.decode(inputs[:,i])[0]}\n"
                 f"target: {tokenizer.decode(targets[:,i])[0]}\n"
                 f"output: {tokenizer.decode(translations[:,i])[0]}"
             )
-    return epoch_loss / len(loader)
+
+    # Calculate BLEU score
+    bleu_score = corpus_bleu(hypotheses, [references]).score
+    print(f"BLEU score: {bleu_score:.2f}")
+
+    return epoch_loss / len(loader), bleu_score
 
 
 def train(
@@ -88,16 +108,16 @@ def train(
             device,
             accelerator,
         )
-        valid_loss = epoch_evaluate(
+        valid_loss, valid_bleu = epoch_evaluate(
             model, val_loader, criterion, device, accelerator, tokenizer
         )
-        wandb.log({"train_loss": train_loss, "valid_loss": valid_loss})
+        wandb.log({"train_loss": train_loss, "valid_loss": valid_loss, "valid_bleu": valid_bleu})
         print("\n" + "-" * (len(str(n_epochs)) * 2 + 8))
-    test_loss = epoch_evaluate(
+    test_loss, test_bleu = epoch_evaluate(
         model, test_loader, criterion, device, accelerator, tokenizer
     )
-    print(f" Test Loss: {test_loss:.3f} ")
-    wandb.log({"test_loss": test_loss})
+    print(f" Test Loss: {test_loss:.3f} | Test BLEU: {test_bleu:.2f}")
+    wandb.log({"test_loss": test_loss, "test_bleu": test_bleu})
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="main")
