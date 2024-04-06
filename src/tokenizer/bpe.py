@@ -14,13 +14,13 @@ from utils import PersistentRandom
 
 class BPETokenizer:
     def __init__(self, dataset, max_vocab_size=10000, fraction=0.01, seed=42,
-                 save_path="../data/bpe/", **kwargs):
+                 save_path="../data/bpe/", override=False, **kwargs):
         self.vocab_size = max_vocab_size
         self.seed = seed
         self.fraction = fraction
         self.save_path = save_path
         self._init_special_tokens()
-        self._init_tokenizer(dataset)
+        self._init_tokenizer(dataset, override)
 
     def encode(
             self,
@@ -73,10 +73,10 @@ class BPETokenizer:
             self.unk_token_id,
         ]
 
-    def _init_tokenizer(self, dataset):
+    def _init_tokenizer(self, dataset, override):
         self.filename = f"{self._get_hash(dataset)}.pkl"
         full_path = os.path.join(self.save_path, self.filename)
-        if os.path.exists(full_path):
+        if os.path.exists(full_path) and not override:
             print("Loading existing tokenizer from:", full_path)
             self._load(full_path)
         else:
@@ -187,17 +187,17 @@ class BPETokenizer:
     @staticmethod
     def _merge_tokens(lst: list, pair: tuple, new_tok: int):
         el1, el2 = pair
-        i = iter(lst)
-        new_lst = []
-        try:
-            while True:
-                current = next(i)
-                if current == el1:
-                    next_item = next(i)
-                    if next_item == el2:
-                        new_lst.append(new_tok)
-                        continue
-                new_lst.append(current)
-        except StopIteration:
-            pass
-        return new_lst
+        new_l = []
+        skip = False
+        t2 = None
+        for t1, t2 in zip(lst, lst[1:]):
+            if t1 == el1 and t2 == el2:
+                new_l.append(new_tok)
+                skip = True
+            elif skip:
+                skip = False
+            else:
+                new_l.append(t1)
+        if not skip and t2 is not None:
+            new_l.append(t2)
+        return new_l
