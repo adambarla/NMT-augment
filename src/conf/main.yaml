@@ -14,8 +14,7 @@ wandb:
     project: "Data Augmentation for Neural Machine Translation"
 
 emb_size: 128
-src_vocab_size: null
-tgt_vocab_size: null
+vocab_size: 10000
 
 batch_size: 32
 max_length: 256 # 143.16(mean), 127(50th%), 253(90th%), 414.0(99th%)

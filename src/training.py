@@ -118,10 +118,7 @@ def main(cfg):
     device = get_device(cfg)
     dataset = get_dataset(cfg)
     tokenizer = hydra.utils.instantiate(cfg.tokenizer, dataset=dataset)
-    cfg.src_vocab_size = tokenizer.vocab_size
-    cfg.tgt_vocab_size = tokenizer.vocab_size
     print(f"Tokenizer:\n{tokenizer}")
-
     train_loader, val_loader, test_loader = get_dataloaders(cfg, tokenizer, dataset)
     train_loader, val_loader, test_loader = accelerator.prepare(
         train_loader, val_loader, test_loader
@@ -135,10 +132,8 @@ def main(cfg):
     )
     model.to(device)
     print(f"Model:\n{model}")
-    # todo: freeze model parameters if pretrained
     optimizer = hydra.utils.instantiate(cfg.optimizer, model.parameters())
     print(f"Optimizer:\n{optimizer}")
-
     criterion = hydra.utils.instantiate(cfg.criterion)
     train(
         device,
