@@ -54,9 +54,8 @@ class BPETokenizer:
             x = [x]
         decoded_text = [
             b"".join(
-                self.vocab.get(t, b"\xef\xbf\xbd")
-                for t in seq
-                if t not in special_token_ids
+                self.vocab[t] for t in seq
+                if t not in self.special_token_ids
             ).decode("utf-8", errors="replace")
             for seq in x
         ]
@@ -64,31 +63,30 @@ class BPETokenizer:
 
     def _consolidate_dataset(self, dataset):
         lst = list()
-        tok = set()
         pr = PersistentRandom(self.seed)
         space = " ".encode("utf-8")
-        for key, partition in dataset.items():
-            with tqdm(
-                total=len(partition), desc=f"Tokenizer | consolidating {key:<10}"
-            ) as pbar:
+        n = sum(len(partition) for partition in dataset.values())
+        with tqdm(total=n, desc=f"unifying data") as pbar:
+            for partition in dataset.values():
                 for example in partition:
                     if pr.rand() < self.fraction:
                         for l_example in example["translation"].values():
                             s = l_example.encode("utf-8")
-                            tok.update(s)
                             lst.extend(list(s) + list(space))
+                        pbar.set_description(
+                            f"unifying data, n_tokens={len(lst)}"
+                        )
                     pbar.update(1)
-        return lst, tok
+        return lst
 
-    def _consolidate_tokens(self, lst, tok):
+    def _create_tokens(self, lst):
+        tok = set(range(256))
         new_tok = 256
         vocab = {key: bytes([key]) for key in tok}
         merges = dict()
         org_len = len(lst)
-        tokens_to_generate = self.max_vocab_size - len(tok) - len(self.special_tokens)
-        with tqdm(
-            total=(tokens_to_generate), desc=f"Tokenizer | creating BPE encoding"
-        ) as pbar:
+        tokens_to_generate = self.vocab_size - len(tok)
+        with tqdm(total=tokens_to_generate, desc=f"creating BPE") as pbar:
             for i in range(tokens_to_generate):
                 counts = self._get_pair_counts(lst)
                 to_merge = counts.most_common(1)[0][0]
@@ -98,7 +96,7 @@ class BPETokenizer:
                 new_tok += 1
                 pbar.update(1)
                 pbar.set_description(
-                    f"Tokenizer | compress: {org_len / len(lst):.3f} | vocab: {len(vocab)}"
+                    f"creating BPE, compression={org_len / len(lst):.1f}"
                 )
         return vocab, merges
 
