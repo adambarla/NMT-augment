@@ -1,6 +1,6 @@
 defaults:
     - _self_
-    - tokenizer: character
+    - tokenizer: bpe
     - model: seq2seq
     - optimizer: adamw
     - criterion: crossentropy
@@ -18,15 +18,16 @@ src_vocab_size: null
 tgt_vocab_size: null
 
 batch_size: 32
-max_length: 128
+max_length: 256 # 143.16(mean), 127(50th%), 253(90th%), 414.0(99th%)
 lr: 0.0001
 epochs: 100
 dropout: 0.1 # 0.1 is the default from the https://pytorch.org/tutorials/beginner/colab tutorial
 
-subset_size: 4096 # number of training examples selected (persistent depending on seed), if null whole dataset is used
+subset_size: null # number of training examples selected (persistent depending on seed), if null whole dataset is used
 
 name: null # if null, it will be assigned automatically as time
 group: null # todo: change automatic selection of run group
 
 seed: 42
 device: null # if null auto cofiguration happens in this order based on availability: gpu, mps, cpu
+pin_memory: False # turn on on gpu

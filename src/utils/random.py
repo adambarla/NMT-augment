@@ -14,6 +14,9 @@ class PersistentRandom:
     def seed(self, seed):
         self.random_state.seed(seed)
 
+    def rand(self, *args):
+        return self.random_state.rand(*args)
+
     def permutation(self, x):
         return self.random_state.permutation(x)
 

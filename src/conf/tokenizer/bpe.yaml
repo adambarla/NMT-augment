@@ -1,0 +1,4 @@
+_target_: tokenizer.bpe.BPETokenizer
+max_vocab_size: 1000
+fraction: 0.01 # fraction of the dataset to use for generating BPE
+seed: ${seed}
