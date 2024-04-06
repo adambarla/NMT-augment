@@ -1,3 +1,6 @@
+import hashlib
+import os
+import pickle
 from collections import Counter
 import torch
 from tqdm import tqdm
@@ -5,25 +8,22 @@ from utils import PersistentRandom
 
 
 class BPETokenizer:
-    def __init__(self, dataset, max_vocab_size=10000, fraction=0.01, seed=42, **kwargs):
-        self.max_vocab_size = max_vocab_size
+    def __init__(self, dataset, max_vocab_size=10000, fraction=0.01, seed=42,
+                 save_path="../data/bpe/", **kwargs):
+        self.vocab_size = max_vocab_size
         self.seed = seed
         self.fraction = fraction
-        self.special_tokens = ["<s>", "<pad>", "</s>", "<unk>"]
-        self.bos_token_id = 255  # these values of utf-8 encoding are invalid
-        self.pad_token_id = 254
-        self.eos_token_id = 253
-        self.unk_token_id = 252
-        self.vocab, self.merges = self._create_vocab(dataset)
-        self.vocab_size = len(self.vocab)
+        self.save_path = save_path
+        self._init_special_tokens()
+        self._init_tokenizer(dataset)
 
     def encode(
-        self,
-        x,
-        add_special_tokens: bool = True,
-        truncation: bool = True,
-        padding="max_length",
-        max_length: int = None,
+            self,
+            x,
+            add_special_tokens: bool = True,
+            truncation: bool = True,
+            padding="max_length",
+            max_length: int = None,
     ):
         encoded = list(x.encode("utf-8"))
         while len(encoded) > 1:
@@ -42,12 +42,6 @@ class BPETokenizer:
         return encoded
 
     def decode(self, x):
-        special_token_ids = [
-            self.bos_token_id,
-            self.pad_token_id,
-            self.eos_token_id,
-            self.unk_token_id,
-        ]
         if isinstance(x, torch.Tensor):
             x = x.tolist()
         if isinstance(x, list) and (not x or isinstance(x[0], int)):
@@ -60,6 +54,85 @@ class BPETokenizer:
             for seq in x
         ]
         return decoded_text
+
+    def _init_special_tokens(self):
+        self.special_tokens = ["<s>", "<pad>", "</s>", "<unk>"]
+        self.bos_token_id = 255  # these values of utf-8 encoding are invalid
+        self.pad_token_id = 254
+        self.eos_token_id = 253
+        self.unk_token_id = 252
+        self.special_token_ids = [
+            self.bos_token_id,
+            self.pad_token_id,
+            self.eos_token_id,
+            self.unk_token_id,
+        ]
+
+    def _init_tokenizer(self, dataset):
+        self.filename = f"{self._get_hash(dataset)}.pkl"
+        full_path = os.path.join(self.save_path, self.filename)
+        if os.path.exists(full_path):
+            print("Loading existing tokenizer from:", full_path)
+            self._load(full_path)
+        else:
+            if not os.path.exists(self.save_path):
+                os.makedirs(self.save_path)
+            print("Creating new tokenizer configuration.")
+            self._create(dataset)
+            self._save(full_path)
+
+    def _get_hash(self, dataset):
+        hash_input = {
+            'dataset_hash': hashlib.sha256(pickle.dumps(dataset, protocol=pickle.HIGHEST_PROTOCOL)).hexdigest(),
+            'vocab_size': self.vocab_size,
+            'fraction': self.fraction,
+            'seed': self.seed
+        }
+        serialized_input = pickle.dumps(hash_input, protocol=pickle.HIGHEST_PROTOCOL)
+        return hashlib.sha256(serialized_input).hexdigest()
+
+    def _save(self, full_path):
+        data = {
+            "vocab": self.vocab,
+            "merges": self.merges,
+            "vocab_size": self.vocab_size,
+            "special_tokens": self.special_tokens,
+            "special_token_ids": self.special_token_ids,
+            "bos_token_id": self.bos_token_id,
+            "pad_token_id": self.pad_token_id,
+            "eos_token_id": self.eos_token_id,
+            "unk_token_id": self.unk_token_id,
+        }
+        with open(full_path, "wb") as f:
+            pickle.dump(data, f)
+        print("Tokenizer configuration saved to:", full_path)
+
+    def _load(self, path):
+        with open(path, "rb") as f:
+            data = pickle.load(f)
+        self.vocab = data["vocab"]
+        self.merges = data["merges"]
+        self.vocab_size = data["vocab_size"]
+        self.special_tokens = data["special_tokens"]
+        self.special_token_ids = data["special_token_ids"]
+        self.bos_token_id = data["bos_token_id"]
+        self.pad_token_id = data["pad_token_id"]
+        self.eos_token_id = data["eos_token_id"]
+        self.unk_token_id = data["unk_token_id"]
+
+    def _create(self, dataset):
+        # consolidate dataset to huge list of utf-8 bytes
+        lst = self._consolidate_dataset(dataset)
+        # recursively merge most common token pairs until vocab is full
+        vocab, merges = self._create_tokens(lst)
+        vocab[self.unk_token_id] = b"<unk>"
+        vocab[self.eos_token_id] = b"<s/>"
+        vocab[self.pad_token_id] = b"<pad>"
+        vocab[self.bos_token_id] = b"<s>"
+        self.vocab = vocab
+        self.merges = merges
+        if self.vocab_size != len(vocab):
+            raise Exception(f"{self.vocab_size}, {len(vocab)}")
 
     def _consolidate_dataset(self, dataset):
         lst = list()
@@ -98,17 +171,6 @@ class BPETokenizer:
                 pbar.set_description(
                     f"creating BPE, compression={org_len / len(lst):.1f}"
                 )
-        return vocab, merges
-
-    def _create_vocab(self, dataset):
-        # consolidate dataset to huge list of utf-8 bytes
-        l, t = self._consolidate_dataset(dataset)
-        # recursively merge most common token pairs until vocab is full
-        vocab, merges = self._consolidate_tokens(l, t)
-        vocab[self.unk_token_id] = b"<unk>"
-        vocab[self.eos_token_id] = b"<s/>"
-        vocab[self.pad_token_id] = b"<pad>"
-        vocab[self.bos_token_id] = b"<s>"
         return vocab, merges
 
     @staticmethod

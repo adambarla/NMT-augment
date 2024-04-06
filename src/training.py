@@ -58,13 +58,13 @@ def epoch_evaluate(model, loader, criterion, device, accelerator, tokenizer):
                 pbar.set_description(f"Valid Loss: {epoch_loss / (i + 1.0):.3f}")
                 pbar.update(1)
         translations = model.translate(
-            inputs, max_length=inputs.shape[0] * 1.05, context_size=inputs.shape[0]
+            inputs[:,:3], max_length=int(inputs.shape[0] * 1.05), context_size=inputs.shape[0]
         )
         for i in range(3):
             print(
-                f"\n\t input: {tokenizer.decode(inputs[:,i])[0]}\n"
-                f"\ttarget: {tokenizer.decode(targets[:,i])[0]}\n"
-                f"\toutput: {tokenizer.decode(translations[:,i])[0]}"
+                f"\n input: {tokenizer.decode(inputs[:,i])[0]}\n"
+                f"target: {tokenizer.decode(targets[:,i])[0]}\n"
+                f"output: {tokenizer.decode(translations[:,i])[0]}"
             )
     return epoch_loss / len(loader)
 
