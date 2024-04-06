@@ -35,21 +35,21 @@ def get_dataloaders(cfg, tokenizer, dataset):
         get_subset(cfg, dataset["train"]),
         batch_size=batch_size,
         collate_fn=col_fn_args,
-        pin_memory=True,
+        pin_memory=cfg.pin_memory,
         shuffle=True,
     )
     val_dataloader = DataLoader(
         dataset["validation"],
         batch_size=batch_size,
         collate_fn=col_fn_args,
-        pin_memory=True,
+        pin_memory=cfg.pin_memory,
         shuffle=False,
     )
     test_dataloader = DataLoader(
         dataset["test"],
         batch_size=batch_size,
         collate_fn=col_fn_args,
-        pin_memory=True,
+        pin_memory=cfg.pin_memory,
         shuffle=False,
     )
     dataloader_info = (
