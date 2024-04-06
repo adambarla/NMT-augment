@@ -29,4 +29,6 @@ group: null # todo: change automatic selection of run group
 
 seed: 42
 device: null # if null auto cofiguration happens in this order based on availability: gpu, mps, cpu
-pin_memory: False # turn on on gpu
+pin_memory: true # turn on on gpu
+prefetch_factor: 8
+num_workers: 4

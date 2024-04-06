@@ -1,7 +1,12 @@
 import hashlib
+import multiprocessing
 import os
 import pickle
+import time
 from collections import Counter
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from threading import Lock
+
 import torch
 from tqdm import tqdm
 from utils import PersistentRandom
@@ -182,15 +187,17 @@ class BPETokenizer:
     @staticmethod
     def _merge_tokens(lst: list, pair: tuple, new_tok: int):
         el1, el2 = pair
-        i = 0
+        i = iter(lst)
         new_lst = []
-        while i < len(lst) - 1:
-            if lst[i] == el1 and lst[i + 1] == el2:
-                new_lst.append(new_tok)
-                i += 2
-            else:
-                new_lst.append(lst[i])
-                i += 1
-        if i < len(lst):
-            new_lst.append(lst[i])
+        try:
+            while True:
+                current = next(i)
+                if current == el1:
+                    next_item = next(i)
+                    if next_item == el2:
+                        new_lst.append(new_tok)
+                        continue
+                new_lst.append(current)
+        except StopIteration:
+            pass
         return new_lst
