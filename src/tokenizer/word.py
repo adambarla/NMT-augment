@@ -42,7 +42,12 @@ class WordTokenizer:
         return encoded
 
     def decode(self, x):
-        special_token_ids = [self.bos_token_id,self.pad_token_id,self.eos_token_id,self.unk_token_id]
+        special_token_ids = [
+            self.bos_token_id,
+            self.pad_token_id,
+            self.eos_token_id,
+            self.unk_token_id,
+        ]
         if isinstance(x, torch.Tensor):
             x = x.tolist()
         if isinstance(x, list) and (not x or isinstance(x[0], int)):
@@ -64,7 +69,9 @@ class WordTokenizer:
         vocab.extend(
             [
                 word
-                for word, count in word_counts.most_common(self.max_vocab_size - len(self.special_tokens))
+                for word, count in word_counts.most_common(
+                    self.max_vocab_size - len(self.special_tokens)
+                )
                 if count >= self.min_freq
             ]
         )

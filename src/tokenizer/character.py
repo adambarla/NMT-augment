@@ -32,7 +32,12 @@ class CharacterTokenizer:
         return encoded
 
     def decode(self, x):
-        special_token_ids = [self.bos_token_id,self.pad_token_id,self.eos_token_id,self.unk_token_id]
+        special_token_ids = [
+            self.bos_token_id,
+            self.pad_token_id,
+            self.eos_token_id,
+            self.unk_token_id,
+        ]
         if isinstance(x, torch.Tensor):
             x = x.tolist()
         if isinstance(x, list) and (not x or isinstance(x[0], int)):

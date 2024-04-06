@@ -18,17 +18,17 @@ class BPETokenizer:
         self.vocab_size = len(self.vocab)
 
     def encode(
-            self,
-            x,
-            add_special_tokens: bool = True,
-            truncation: bool = True,
-            padding="max_length",
-            max_length: int = None,
+        self,
+        x,
+        add_special_tokens: bool = True,
+        truncation: bool = True,
+        padding="max_length",
+        max_length: int = None,
     ):
-        encoded = list(x.encode('utf-8'))
+        encoded = list(x.encode("utf-8"))
         while len(encoded) > 1:
             pairs = self._get_pair_counts(encoded)
-            to_merge = min(pairs, key=lambda k: self.merges.get(k, float('inf')))
+            to_merge = min(pairs, key=lambda k: self.merges.get(k, float("inf")))
             if to_merge not in self.merges:
                 break
             replace = self.merges[to_merge]
@@ -42,13 +42,22 @@ class BPETokenizer:
         return encoded
 
     def decode(self, x):
-        special_token_ids = [self.bos_token_id, self.pad_token_id, self.eos_token_id, self.unk_token_id]
+        special_token_ids = [
+            self.bos_token_id,
+            self.pad_token_id,
+            self.eos_token_id,
+            self.unk_token_id,
+        ]
         if isinstance(x, torch.Tensor):
             x = x.tolist()
         if isinstance(x, list) and (not x or isinstance(x[0], int)):
             x = [x]
         decoded_text = [
-            b"".join(self.vocab.get(t, b'\xef\xbf\xbd') for t in seq if t not in special_token_ids).decode('utf-8', errors='replace')
+            b"".join(
+                self.vocab.get(t, b"\xef\xbf\xbd")
+                for t in seq
+                if t not in special_token_ids
+            ).decode("utf-8", errors="replace")
             for seq in x
         ]
         return decoded_text
@@ -57,13 +66,15 @@ class BPETokenizer:
         lst = list()
         tok = set()
         pr = PersistentRandom(self.seed)
-        space = ' '.encode('utf-8')
+        space = " ".encode("utf-8")
         for key, partition in dataset.items():
-            with tqdm(total=len(partition), desc=f"Tokenizer | consolidating {key:<10}") as pbar:
+            with tqdm(
+                total=len(partition), desc=f"Tokenizer | consolidating {key:<10}"
+            ) as pbar:
                 for example in partition:
                     if pr.rand() < self.fraction:
-                        for l_example in example['translation'].values():
-                            s = l_example.encode('utf-8')
+                        for l_example in example["translation"].values():
+                            s = l_example.encode("utf-8")
                             tok.update(s)
                             lst.extend(list(s) + list(space))
                     pbar.update(1)
@@ -74,8 +85,11 @@ class BPETokenizer:
         vocab = {key: bytes([key]) for key in tok}
         merges = dict()
         org_len = len(lst)
-        with tqdm(total=(self.max_vocab_size - len(tok)), desc=f"Tokenizer | creating BPE encoding") as pbar:
-            for i in range(self.max_vocab_size - len(tok)):
+        tokens_to_generate = self.max_vocab_size - len(tok) - len(self.special_tokens)
+        with tqdm(
+            total=(tokens_to_generate), desc=f"Tokenizer | creating BPE encoding"
+        ) as pbar:
+            for i in range(tokens_to_generate):
                 counts = self._get_pair_counts(lst)
                 to_merge = counts.most_common(1)[0][0]
                 lst = self._merge_tokens(lst, to_merge, new_tok)
@@ -83,7 +97,9 @@ class BPETokenizer:
                 merges[to_merge] = new_tok
                 new_tok += 1
                 pbar.update(1)
-                pbar.set_description(f"Tokenizer | compress: {org_len / len(lst):.3f} | vocab: {len(vocab)}")
+                pbar.set_description(
+                    f"Tokenizer | compress: {org_len / len(lst):.3f} | vocab: {len(vocab)}"
+                )
         return vocab, merges
 
     def _create_vocab(self, dataset):
@@ -91,10 +107,10 @@ class BPETokenizer:
         l, t = self._consolidate_dataset(dataset)
         # recursively merge most common token pairs until vocab is full
         vocab, merges = self._consolidate_tokens(l, t)
-        vocab[self.unk_token_id] = b'<unk>'
-        vocab[self.eos_token_id] = b'<s/>'
-        vocab[self.pad_token_id] = b'<pad>'
-        vocab[self.bos_token_id] = b'<s>'
+        vocab[self.unk_token_id] = b"<unk>"
+        vocab[self.eos_token_id] = b"<s/>"
+        vocab[self.pad_token_id] = b"<pad>"
+        vocab[self.bos_token_id] = b"<s>"
         return vocab, merges
 
     @staticmethod
