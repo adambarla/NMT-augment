@@ -36,13 +36,18 @@ class WordTokenizer:
         if truncation and max_length is not None:
             encoded = encoded[: max_length - (2 if add_special_tokens else 0)]
         if add_special_tokens:
-            encoded = [self._stoi["<s>"]] + encoded + [self._stoi["</s>"]]
+            encoded = [self.bos_token_id] + encoded + [self.eos_token_id]
         if padding == "max_length" and max_length is not None:
             encoded += [self.pad_token_id] * (max_length - len(encoded))
         return encoded
 
     def decode(self, x):
-        special_token_ids = self.encode(self.special_tokens, add_special_tokens=False)
+        special_token_ids = [
+            self.bos_token_id,
+            self.pad_token_id,
+            self.eos_token_id,
+            self.unk_token_id,
+        ]
         if isinstance(x, torch.Tensor):
             x = x.tolist()
         if isinstance(x, list) and (not x or isinstance(x[0], int)):
@@ -64,7 +69,9 @@ class WordTokenizer:
         vocab.extend(
             [
                 word
-                for word, count in word_counts.most_common(self.max_vocab_size - 4)
+                for word, count in word_counts.most_common(
+                    self.max_vocab_size - len(self.special_tokens)
+                )
                 if count >= self.min_freq
             ]
         )

@@ -6,7 +6,6 @@ import hydra
 import torch
 import wandb
 from tqdm import tqdm
-
 from utils import (
     init_wandb,
     set_deterministic,
@@ -45,7 +44,7 @@ def epoch_evaluate(model, loader, criterion, device, accelerator, tokenizer):
     model.eval()
     inputs = targets = None
     with torch.no_grad():
-        with tqdm(total=len(loader), desc="Training Progress") as pbar:
+        with tqdm(total=len(loader), desc="Valid") as pbar:
             for i, batch in enumerate(loader):
                 inputs, targets = batch
                 inputs = inputs.transpose(0, 1).to(device)
@@ -57,14 +56,12 @@ def epoch_evaluate(model, loader, criterion, device, accelerator, tokenizer):
                 epoch_loss += accelerator.gather(loss.item())
                 pbar.set_description(f"Valid Loss: {epoch_loss / (i + 1.0):.3f}")
                 pbar.update(1)
-        translations = model.translate(
-            inputs, max_length=inputs.shape[0] * 1.05, context_size=inputs.shape[0]
-        )
+        translations = model.translate(inputs[:, :3], context_size=inputs.shape[0])
         for i in range(3):
             print(
-                f"\n\t input: {tokenizer.decode(inputs[:,i])[0]}\n"
-                f"\ttarget: {tokenizer.decode(targets[:,i])[0]}\n"
-                f"\toutput: {tokenizer.decode(translations[:,i])[0]}"
+                f"\n input: {tokenizer.decode(inputs[:,i])[0]}\n"
+                f"target: {tokenizer.decode(targets[:,i])[0]}\n"
+                f"output: {tokenizer.decode(translations[:,i])[0]}"
             )
     return epoch_loss / len(loader)
 
@@ -114,15 +111,11 @@ def main(cfg):
         log_with="wandb",
         # logging_dir="logs" # unexpected argument?
     )
-    
+
     device = get_device(cfg)
     dataset = get_dataset(cfg)
     tokenizer = hydra.utils.instantiate(cfg.tokenizer, dataset=dataset)
-    cfg.src_vocab_size = tokenizer.vocab_size
-    cfg.tgt_vocab_size = tokenizer.vocab_size
     print(f"Tokenizer:\n{tokenizer}")
-
-
     train_loader, val_loader, test_loader = get_dataloaders(cfg, tokenizer, dataset)
     train_loader, val_loader, test_loader = accelerator.prepare(
         train_loader, val_loader, test_loader
@@ -136,10 +129,8 @@ def main(cfg):
     )
     model.to(device)
     print(f"Model:\n{model}")
-    # todo: freeze model parameters if pretrained
     optimizer = hydra.utils.instantiate(cfg.optimizer, model.parameters())
     print(f"Optimizer:\n{optimizer}")
-
     criterion = hydra.utils.instantiate(cfg.criterion)
     train(
         device,

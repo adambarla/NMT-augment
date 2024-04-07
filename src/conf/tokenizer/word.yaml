@@ -1,1 +1,3 @@
 _target_: tokenizer.word.WordTokenizer
+vocab_size: ${vocab_size} 
+min_freq: 1

@@ -22,17 +22,22 @@ class CharacterTokenizer:
         padding="max_length",
         max_length: int = None,
     ):
-        encoded = [self._stoi.get(c, self._stoi["<unk>"]) for c in x]
+        encoded = [self._stoi.get(c, self.unk_token_id) for c in x]
         if truncation and max_length is not None:
             encoded = encoded[: max_length - (2 if add_special_tokens else 0)]
         if add_special_tokens:
-            encoded = [self._stoi["<s>"]] + encoded + [self._stoi["</s>"]]
+            encoded = [self.bos_token_id] + encoded + [self.eos_token_id]
         if padding == "max_length" and max_length is not None:
-            encoded += [self._stoi["<pad>"]] * (max_length - len(encoded))
+            encoded += [self.pad_token_id] * (max_length - len(encoded))
         return encoded
 
     def decode(self, x):
-        special_token_ids = self.encode(self.special_tokens, add_special_tokens=False)
+        special_token_ids = [
+            self.bos_token_id,
+            self.pad_token_id,
+            self.eos_token_id,
+            self.unk_token_id,
+        ]
         if isinstance(x, torch.Tensor):
             x = x.tolist()
         if isinstance(x, list) and (not x or isinstance(x[0], int)):
