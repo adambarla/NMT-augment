@@ -57,7 +57,7 @@ def epoch_evaluate(
                 )
                 epoch_loss += accelerator.gather(loss.item())
                 translations = model.translate(
-                    inputs, buffer=0.0, context_size=inputs.shape[0]
+                    inputs, buffer=0.5, context_size=inputs.shape[0]
                 )
                 decoded_translations = tokenizer.decode(translations.transpose(0, 1))
                 decoded_targets = tokenizer.decode(targets.transpose(0, 1))
