@@ -1,11 +1,7 @@
 import hashlib
-import multiprocessing
 import os
 import pickle
-import time
 from collections import Counter
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-from threading import Lock
 
 import torch
 from tqdm import tqdm
@@ -59,13 +55,12 @@ class BPETokenizer:
             x = x.tolist()
         if isinstance(x, list) and (not x or isinstance(x[0], int)):
             x = [x]
-        decoded_text = [
+        return [
             b"".join(
                 self.vocab[t] for t in seq if t not in self.special_token_ids
             ).decode("utf-8", errors="replace")
             for seq in x
         ]
-        return decoded_text
 
     def _init_special_tokens(self):
         self.special_tokens = ["<s>", "<pad>", "</s>", "<unk>"]
