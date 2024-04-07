@@ -67,6 +67,7 @@ class Seq2Seq(nn.Module):
         max_length: int = sys.maxsize,
         context_size=sys.maxsize,
     ):
+        # x = L x B
         in_fin = torch.zeros(x.shape[1], dtype=torch.bool, device=self.device)
         in_all_fin_idx = sys.maxsize
         out_fin = torch.zeros(x.shape[1], dtype=torch.bool, device=self.device)
@@ -78,7 +79,7 @@ class Seq2Seq(nn.Module):
         for i in range(1, max_length):
             if i >= int(in_all_fin_idx * (buffer + 1)):
                 break
-            probs = F.softmax(self.forward(x, output[-context_size:, :])[-1], dim=-1)
+            probs = F.softmax(self.forward(x, output[-context_size:i])[-1], dim=-1)
             output[i] = torch.multinomial(probs, num_samples=1).transpose(0, 1)
             out_fin |= output[i] == self.eos_token
             if out_fin.all():
