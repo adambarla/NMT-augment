@@ -23,7 +23,11 @@ def get_subset(cfg, dataset):
 
 def get_dataloaders(cfg, tokenizer, dataset):
     col_fn_args = partial(
-        collate_fn, tokenizer=tokenizer, max_length=cfg.max_length, l1=cfg.data.lang[:2], l2=cfg.data.lang[3:]
+        collate_fn,
+        tokenizer=tokenizer,
+        max_length=cfg.max_length,
+        l1=cfg.data.lang[:2],
+        l2=cfg.data.lang[3:],
     )
     train_dataloader = DataLoader(
         get_subset(cfg, dataset["train"]),

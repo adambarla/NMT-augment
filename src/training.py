@@ -37,7 +37,9 @@ def epoch_train(model, loader, optimizer, criterion, device, accelerator):
     return epoch_loss / len(loader)
 
 
-def epoch_evaluate(model, loader, criterion, device, accelerator, tokenizer, n_examples=3):
+def epoch_evaluate(
+    model, loader, criterion, device, accelerator, tokenizer, n_examples=3
+):
     epoch_loss = 0.0
     model.eval()
     hypotheses = []
@@ -47,14 +49,16 @@ def epoch_evaluate(model, loader, criterion, device, accelerator, tokenizer, n_e
         with tqdm(total=len(loader), desc="Valid") as pbar:
             for i, batch in enumerate(loader):
                 inputs, targets = batch
-                inputs = inputs.transpose(0, 1).to(device) # L x B
+                inputs = inputs.transpose(0, 1).to(device)  # L x B
                 targets = targets.transpose(0, 1).to(device)
-                outputs = model(inputs, targets[:-1]) # L x B x V
+                outputs = model(inputs, targets[:-1])  # L x B x V
                 loss = criterion(
                     outputs.reshape(-1, outputs.shape[-1]), targets[1:].reshape(-1)
                 )
                 epoch_loss += accelerator.gather(loss.item())
-                translations = model.translate(inputs, buffer=0.0, context_size=inputs.shape[0])
+                translations = model.translate(
+                    inputs, buffer=0.0, context_size=inputs.shape[0]
+                )
                 decoded_translations = tokenizer.decode(translations.transpose(0, 1))
                 decoded_targets = tokenizer.decode(targets.transpose(0, 1))
                 hypotheses += decoded_translations
@@ -73,16 +77,16 @@ def epoch_evaluate(model, loader, criterion, device, accelerator, tokenizer, n_e
 
 
 def train(
-        device,
-        model,
-        optimizer,
-        criterion,
-        accelerator,
-        n_epochs,
-        train_loader,
-        val_loader,
-        test_loader,
-        tokenizer,
+    device,
+    model,
+    optimizer,
+    criterion,
+    accelerator,
+    n_epochs,
+    train_loader,
+    val_loader,
+    test_loader,
+    tokenizer,
 ):
     for epoch in range(n_epochs):
         print(f"Epoch: {epoch + 1:>{len(str(n_epochs))}d}/{n_epochs}")
@@ -97,7 +101,13 @@ def train(
         valid_loss, valid_bleu = epoch_evaluate(
             model, val_loader, criterion, device, accelerator, tokenizer
         )
-        wandb.log({"train_loss": train_loss, "valid_loss": valid_loss, "valid_bleu": valid_bleu})
+        wandb.log(
+            {
+                "train_loss": train_loss,
+                "valid_loss": valid_loss,
+                "valid_bleu": valid_bleu,
+            }
+        )
         print("-" * (len(str(n_epochs)) * 2 + 8))
     test_loss, test_bleu = epoch_evaluate(
         model, test_loader, criterion, device, accelerator, tokenizer
