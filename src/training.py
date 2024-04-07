@@ -64,11 +64,12 @@ def epoch_evaluate(model, loader, criterion, device, accelerator, tokenizer):
 
                 # Generate translations
                 generated_seqs = model.translate(inputs, max_length=targets.size(0))
-                generated_texts = [tokenizer.decode(seq) for seq in generated_seqs.transpose(0, 1)]
-                target_texts = [[tokenizer.decode(seq)] for seq in targets.transpose(0, 1)]
+                generated_texts = [tokenizer.decode(seq.tolist()) for seq in generated_seqs.transpose(0, 1)]
+                target_texts = [tokenizer.decode(seq) for seq in targets.transpose(0, 1)]
 
-                hypotheses.extend(generated_texts)
-                references.extend(target_texts)
+                hypotheses.extend(each for each in generated_texts)
+                references.extend(ref for ref in target_texts)
+
 
 
         translations = model.translate(
@@ -81,8 +82,12 @@ def epoch_evaluate(model, loader, criterion, device, accelerator, tokenizer):
                 f"\toutput: {tokenizer.decode(translations[:,i])[0]}"
             )
 
+
     # Calculate BLEU score
-    bleu_score = corpus_bleu(hypotheses, [references]).score
+    new_hypotheses = []
+    for i in range(len(hypotheses)):
+        new_hypotheses.append(hypotheses[i][0])
+    bleu_score = corpus_bleu(new_hypotheses, references).score
     print(f"BLEU score: {bleu_score:.2f}")
 
     return epoch_loss / len(loader), bleu_score
