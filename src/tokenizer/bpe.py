@@ -187,15 +187,17 @@ class BPETokenizer:
     @staticmethod
     def _merge_tokens(lst: list, pair: tuple, new_tok: int):
         el1, el2 = pair
-        i = 0
-        new_lst = []
-        while i < len(lst) - 1:
-            if lst[i] == el1 and lst[i + 1] == el2:
-                new_lst.append(new_tok)
-                i += 2
+        new_l = []
+        skip = False
+        t2 = None
+        for t1, t2 in zip(lst, lst[1:]):
+            if t1 == el1 and t2 == el2:
+                new_l.append(new_tok)
+                skip = True
+            elif skip:
+                skip = False
             else:
-                new_lst.append(lst[i])
-                i += 1
-        if i < len(lst):
-            new_lst.append(lst[i])
-        return new_lst
+                new_l.append(t1)
+        if not skip and t2 is not None:
+            new_l.append(t2)
+        return new_l
