@@ -1,6 +1,7 @@
 """
 Main script for training and testing the models.
 """
+
 import hydra
 import torch
 import wandb
@@ -55,7 +56,7 @@ def epoch_evaluate(model, loader, criterion, device, accelerator, tokenizer):
                 epoch_loss += accelerator.gather(loss.item())
                 pbar.set_description(f"Valid Loss: {epoch_loss / (i + 1.0):.3f}")
                 pbar.update(1)
-        translations = model.translate(inputs[:,:3], context_size=inputs.shape[0])
+        translations = model.translate(inputs[:, :3], context_size=inputs.shape[0])
         for i in range(3):
             print(
                 f"\n input: {tokenizer.decode(inputs[:,i])[0]}\n"

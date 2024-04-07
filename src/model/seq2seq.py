@@ -60,7 +60,9 @@ class Seq2Seq(nn.Module):
             self.positional_encoding(self.tgt_tok_emb(tgt)), memory, tgt_mask
         )
 
-    def translate(self, x, buffer: float=0.5, max_length: int = sys.maxsize, context_size=None):
+    def translate(
+        self, x, buffer: float = 0.5, max_length: int = sys.maxsize, context_size=None
+    ):
         output = (
             torch.ones(1, x.shape[1])
             .fill_(self.bos_token)

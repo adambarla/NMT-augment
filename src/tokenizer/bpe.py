@@ -13,8 +13,16 @@ from utils import PersistentRandom
 
 
 class BPETokenizer:
-    def __init__(self, dataset, max_vocab_size=10000, fraction=0.01, seed=42,
-                 save_path="../data/bpe/", override=False, **kwargs):
+    def __init__(
+        self,
+        dataset,
+        max_vocab_size=10000,
+        fraction=0.01,
+        seed=42,
+        save_path="../data/bpe/",
+        override=False,
+        **kwargs,
+    ):
         self.vocab_size = max_vocab_size
         self.seed = seed
         self.fraction = fraction
@@ -23,12 +31,12 @@ class BPETokenizer:
         self._init_tokenizer(dataset, override)
 
     def encode(
-            self,
-            x,
-            add_special_tokens: bool = True,
-            truncation: bool = True,
-            padding="max_length",
-            max_length: int = None,
+        self,
+        x,
+        add_special_tokens: bool = True,
+        truncation: bool = True,
+        padding="max_length",
+        max_length: int = None,
     ):
         encoded = list(x.encode("utf-8"))
         while len(encoded) > 1:
@@ -53,8 +61,7 @@ class BPETokenizer:
             x = [x]
         decoded_text = [
             b"".join(
-                self.vocab[t] for t in seq
-                if t not in self.special_token_ids
+                self.vocab[t] for t in seq if t not in self.special_token_ids
             ).decode("utf-8", errors="replace")
             for seq in x
         ]
@@ -88,10 +95,12 @@ class BPETokenizer:
 
     def _get_hash(self, dataset):
         hash_input = {
-            'dataset_hash': hashlib.sha256(pickle.dumps(dataset, protocol=pickle.HIGHEST_PROTOCOL)).hexdigest(),
-            'vocab_size': self.vocab_size,
-            'fraction': self.fraction,
-            'seed': self.seed
+            "dataset_hash": hashlib.sha256(
+                pickle.dumps(dataset, protocol=pickle.HIGHEST_PROTOCOL)
+            ).hexdigest(),
+            "vocab_size": self.vocab_size,
+            "fraction": self.fraction,
+            "seed": self.seed,
         }
         serialized_input = pickle.dumps(hash_input, protocol=pickle.HIGHEST_PROTOCOL)
         return hashlib.sha256(serialized_input).hexdigest()
@@ -151,9 +160,7 @@ class BPETokenizer:
                         for l_example in example["translation"].values():
                             s = l_example.encode("utf-8")
                             lst.extend(list(s) + list(space))
-                        pbar.set_description(
-                            f"unifying data, n_tokens={len(lst)}"
-                        )
+                        pbar.set_description(f"unifying data, n_tokens={len(lst)}")
                     pbar.update(1)
         return lst
 
