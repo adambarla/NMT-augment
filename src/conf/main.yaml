@@ -18,7 +18,7 @@ vocab_size: 10000
 
 batch_size: 32
 max_length: 256 # 143.16(mean), 127(50th%), 253(90th%), 414.0(99th%)
-lr: 0.0001
+lr: 0.001
 epochs: 100
 dropout: 0.1 # 0.1 is the default from the https://pytorch.org/tutorials/beginner/colab tutorial
 
@@ -30,5 +30,6 @@ group: null # todo: change automatic selection of run group
 seed: 42
 device: null # if null auto cofiguration happens in this order based on availability: gpu, mps, cpu
 pin_memory: true # turn on on gpu
-prefetch_factor: 8
-num_workers: 4
+prefetch_factor: 4 # how many subprocesses to use for data loading. 0 means that the data will be loaded in the main process. 
+num_workers: 4 # number of batches loaded in advance by each worker.
+persistent_workers: true # if true, the data loader will not shut down the worker processes after a dataset has been consumed once

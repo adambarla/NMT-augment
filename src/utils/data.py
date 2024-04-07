@@ -38,6 +38,7 @@ def get_dataloaders(cfg, tokenizer, dataset):
         pin_memory=cfg.pin_memory,
         prefetch_factor=cfg.prefetch_factor,
         num_workers=cfg.num_workers,
+        persistent_workers=cfg.persistent_workers,
         shuffle=True,
     )
     val_dataloader = DataLoader(
@@ -47,6 +48,7 @@ def get_dataloaders(cfg, tokenizer, dataset):
         pin_memory=cfg.pin_memory,
         prefetch_factor=cfg.prefetch_factor,
         num_workers=cfg.num_workers,
+        persistent_workers=cfg.persistent_workers,
         shuffle=False,
     )
     test_dataloader = DataLoader(
@@ -56,6 +58,7 @@ def get_dataloaders(cfg, tokenizer, dataset):
         pin_memory=cfg.pin_memory,
         prefetch_factor=cfg.prefetch_factor,
         num_workers=cfg.num_workers,
+        persistent_workers=cfg.persistent_workers,
         shuffle=False,
     )
     dataloader_info = (

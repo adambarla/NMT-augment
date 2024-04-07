@@ -1,12 +1,10 @@
 """
 Main script for training and testing the models.
 """
-
 import hydra
 import torch
 import wandb
 from tqdm import tqdm
-
 from utils import (
     init_wandb,
     set_deterministic,
@@ -45,7 +43,7 @@ def epoch_evaluate(model, loader, criterion, device, accelerator, tokenizer):
     model.eval()
     inputs = targets = None
     with torch.no_grad():
-        with tqdm(total=len(loader), desc="Training Progress") as pbar:
+        with tqdm(total=len(loader), desc="Valid") as pbar:
             for i, batch in enumerate(loader):
                 inputs, targets = batch
                 inputs = inputs.transpose(0, 1).to(device)
@@ -57,9 +55,7 @@ def epoch_evaluate(model, loader, criterion, device, accelerator, tokenizer):
                 epoch_loss += accelerator.gather(loss.item())
                 pbar.set_description(f"Valid Loss: {epoch_loss / (i + 1.0):.3f}")
                 pbar.update(1)
-        translations = model.translate(
-            inputs[:,:3], max_length=int(inputs.shape[0] * 1.05), context_size=inputs.shape[0]
-        )
+        translations = model.translate(inputs[:,:3], context_size=inputs.shape[0])
         for i in range(3):
             print(
                 f"\n input: {tokenizer.decode(inputs[:,i])[0]}\n"
