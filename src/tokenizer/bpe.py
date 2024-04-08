@@ -2,7 +2,9 @@ import hashlib
 import os
 import pickle
 from collections import Counter
+from time import time
 
+import regex
 import torch
 from tqdm import tqdm
 from utils import PersistentRandom
@@ -20,6 +22,7 @@ class BPETokenizer:
         override=False,
         **kwargs,
     ):
+        self.split_pattern = r"""'(?i:[sdmt]|ll|ve|re)|[^\r\n\p{L}\p{N}]?+\p{L}+|\p{N}{1,3}| ?[^\s\p{L}\p{N}]++[\r\n]*|\s*[\r\n]|\s+(?!\S)|\s+""" # gpt 4 tok.
         self.lang = lang
         self.vocab_size = max_vocab_size
         self.seed = seed
@@ -38,7 +41,7 @@ class BPETokenizer:
     ):
         encoded = list(x.encode("utf-8"))
         while len(encoded) > 1:
-            pairs = self._get_pair_counts(encoded)
+            pairs = Counter(pair for pair in zip(x, x[1:]))
             to_merge = min(pairs, key=lambda k: self.merges.get(k, float("inf")))
             if to_merge not in self.merges:
                 break
@@ -98,13 +101,15 @@ class BPETokenizer:
             "vocab_size": self.vocab_size,
             "fraction": self.fraction,
             "seed": self.seed,
-            "lang": self.lang
+            "lang": self.lang,
+            "split_pattern" : self.split_pattern
         }
         serialized_input = pickle.dumps(hash_input, protocol=pickle.HIGHEST_PROTOCOL)
         return hashlib.sha256(serialized_input).hexdigest()
 
     def _save(self, full_path):
         data = {
+            "split_pattern" : self.split_pattern,
             "lang": self.lang,
             "vocab": self.vocab,
             "merges": self.merges,
@@ -124,6 +129,7 @@ class BPETokenizer:
         with open(path, "rb") as f:
             data = pickle.load(f)
         self.lang = data["lang"]
+        self.split_pattern = data["split_pattern"]
         self.vocab = data["vocab"]
         self.merges = data["merges"]
         self.vocab_size = data["vocab_size"]
@@ -135,7 +141,7 @@ class BPETokenizer:
         self.unk_token_id = data["unk_token_id"]
 
     def _create(self, dataset):
-        # consolidate dataset to huge list of utf-8 bytes
+        # consolidate dataset to a list of lists of utf-8 bytes
         lst = self._consolidate_dataset(dataset)
         # recursively merge most common token pairs until vocab is full
         vocab, merges = self._create_tokens(lst)
@@ -151,15 +157,14 @@ class BPETokenizer:
     def _consolidate_dataset(self, dataset):
         lst = list()
         pr = PersistentRandom(self.seed)
-        space = " ".encode("utf-8")
         n = sum(len(partition) for partition in dataset.values())
         with tqdm(total=n, desc=f"unifying data") as pbar:
             for partition in dataset.values():
                 for example in partition:
                     if pr.rand() < self.fraction:
-                        s = example['translation'][self.lang].encode("utf-8")
-                        lst.extend(list(s) + list(space))
-                        pbar.set_description(f"unifying data, n_tokens={len(lst)}")
+                        s = example['translation'][self.lang]
+                        lst += [list(m.encode("utf-8")) for m in regex.findall(self.split_pattern, s)]
+                        pbar.set_description(f"unifying data, fraction={self.fraction}, n_tokens={len(lst)}")
                     pbar.update(1)
         return lst
 
@@ -168,27 +173,23 @@ class BPETokenizer:
         new_tok = 256
         vocab = {key: bytes([key]) for key in tok}
         merges = dict()
-        org_len = len(lst)
         tokens_to_generate = self.vocab_size - len(tok)
         with tqdm(total=tokens_to_generate, desc=f"creating BPE") as pbar:
             for i in range(tokens_to_generate):
-                counts = self._get_pair_counts(lst)
+                counts = Counter(pair for l in lst for pair in zip(l, l[1:]))
                 to_merge = counts.most_common(1)[0][0]
-                lst = self._merge_tokens(lst, to_merge, new_tok)
+                for i in range(len(lst)):
+                    lst[i] = self._merge_tokens(lst[i], to_merge, new_tok)
                 vocab[new_tok] = vocab[to_merge[0]] + vocab[to_merge[1]]
                 merges[to_merge] = new_tok
                 new_tok += 1
                 pbar.update(1)
                 pbar.set_description(
-                    f"creating BPE, compression={org_len / len(lst):.1f}"
+                    f"creating BPE, merged "
+                    f"({vocab[to_merge[0]].decode('utf-8',errors='replace')},"
+                    f"{vocab[to_merge[1]].decode('utf-8', errors='replace')})"
                 )
         return vocab, merges
-
-    @staticmethod
-    def _get_pair_counts(tok_lst: list):
-        pair_counts = Counter()
-        pair_counts.update(zip(tok_lst, tok_lst[1:]))
-        return pair_counts
 
     @staticmethod
     def _merge_tokens(l: list, pair: tuple, new_tok: int):
