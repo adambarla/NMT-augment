@@ -4,6 +4,7 @@ from nltk.corpus import wordnet
 import random, re
 import math
 
+
 class WordDictionary:
     def __init__(self, cache=True):
         self.cache = cache
@@ -24,22 +25,19 @@ class WordDictionary:
     def read(self, model_path):
         raise NotImplementedError
 
+
 class PartOfSpeech:
-    NOUN = 'noun'
-    VERB = 'verb'
-    ADJECTIVE = 'adjective'
-    ADVERB = 'adverb'
+    NOUN = "noun"
+    VERB = "verb"
+    ADJECTIVE = "adjective"
+    ADVERB = "adverb"
 
     pos2con = {
-        'n': [
-            'NN', 'NNS', 'NNP', 'NNPS'
-        ],
-        'v': [
-            'VB', 'VBD', 'VBG', 'VBN', 'VBZ'
-        ],
-        'a': ['JJ', 'JJR', 'JJS', 'IN'],
-        's': ['JJ', 'JJR', 'JJS', 'IN'],  # Adjective Satellite
-        'r': ['RB', 'RBR', 'RBS'],  # Adverb
+        "n": ["NN", "NNS", "NNP", "NNPS"],
+        "v": ["VB", "VBD", "VBG", "VBN", "VBZ"],
+        "a": ["JJ", "JJR", "JJS", "IN"],
+        "s": ["JJ", "JJR", "JJS", "IN"],  # Adjective Satellite
+        "r": ["RB", "RBR", "RBS"],  # Adverb
     }
 
     con2pos = {}
@@ -66,7 +64,7 @@ class PartOfSpeech:
     @staticmethod
     def get_pos():
         return PartOfSpeech.poses
-    
+
 
 class WordNet(WordDictionary):
     def __init__(self, lang, is_synonym=True):
@@ -79,13 +77,49 @@ class WordNet(WordDictionary):
             import nltk
             from nltk.corpus import wordnet
         except ModuleNotFoundError:
-            raise ModuleNotFoundError('Missed nltk library. Install nltk by `pip install nltk`')
+            raise ModuleNotFoundError(
+                "Missed nltk library. Install nltk by `pip install nltk`"
+            )
 
-        supported_langs = ['als', 'arb', 'bul', 'cat', 'cmn', 'dan', 'ell', 'eng', 'eus',
-'fin', 'fra', 'glg', 'heb', 'hrv', 'ind', 'isl', 'ita', 'ita_iwn', 'jpn', 'lit', 'nld', 'nno', 'nob', 'pol', 'por', 'ron', 'slk', 'slv', 'spa', 'swe', 'tha', 'zsm']
-        
+        supported_langs = [
+            "als",
+            "arb",
+            "bul",
+            "cat",
+            "cmn",
+            "dan",
+            "ell",
+            "eng",
+            "eus",
+            "fin",
+            "fra",
+            "glg",
+            "heb",
+            "hrv",
+            "ind",
+            "isl",
+            "ita",
+            "ita_iwn",
+            "jpn",
+            "lit",
+            "nld",
+            "nno",
+            "nob",
+            "pol",
+            "por",
+            "ron",
+            "slk",
+            "slv",
+            "spa",
+            "swe",
+            "tha",
+            "zsm",
+        ]
+
         if lang not in supported_langs:
-            raise ValueError(f'Language {lang} is not one of the supported wordnet languages.')
+            raise ValueError(
+                f"Language {lang} is not one of the supported wordnet languages."
+            )
 
         # try:
         #     # Check whether wordnet package is downloaded
@@ -100,11 +134,11 @@ class WordNet(WordDictionary):
 
     def read(self):
         try:
-            wordnet.synsets('testing')
+            wordnet.synsets("testing")
             return wordnet
         except LookupError:
-            nltk.download('wordnet')
-            nltk.download('omw-1.4')
+            nltk.download("wordnet")
+            nltk.download("omw-1.4")
             return wordnet
 
     def predict(self, word, pos=None):
@@ -123,10 +157,11 @@ class WordNet(WordDictionary):
         try:
             results = nltk.pos_tag(tokens)
         except LookupError:
-            nltk.download('averaged_perceptron_tagger')
+            nltk.download("averaged_perceptron_tagger")
             results = nltk.pos_tag(tokens)
 
         return results
+
 
 class SynonymAug(WordAugmenter):
     # https://arxiv.org/pdf/1809.02079.pdf
@@ -147,17 +182,33 @@ class SynonymAug(WordAugmenter):
     :param str name: Name of this augmenter
     """
 
-    def __init__(self, name='synonym', aug_min=1, 
-                 aug_max=10, aug_p=0.3,
-                 lang='eng', stopwords=None, tokenizer=None, reverse_tokenizer=None, stopwords_regex=None, verbose=0):
-        super().__init__(aug_p=aug_p, aug_min=aug_min,
-                    aug_max=aug_max,
-                    stopwords=stopwords, tokenizer=tokenizer, reverse_tokenizer=reverse_tokenizer,
-                    device='cpu', verbose=verbose, stopwords_regex=stopwords_regex,
-                    include_detail=False)
+    def __init__(
+        self,
+        name="synonym",
+        aug_min=1,
+        aug_max=10,
+        aug_p=0.3,
+        lang="eng",
+        stopwords=None,
+        tokenizer=None,
+        reverse_tokenizer=None,
+        stopwords_regex=None,
+        verbose=0,
+    ):
+        super().__init__(
+            aug_p=aug_p,
+            aug_min=aug_min,
+            aug_max=aug_max,
+            stopwords=stopwords,
+            tokenizer=tokenizer,
+            reverse_tokenizer=reverse_tokenizer,
+            device="cpu",
+            verbose=verbose,
+            stopwords_regex=stopwords_regex,
+            include_detail=False,
+        )
         self.lang = lang
         self.model = self.get_model(lang)
-
 
     def skip_aug(self, token_idxes, tokens):
         results = []
@@ -165,7 +216,7 @@ class SynonymAug(WordAugmenter):
             to_be_keep = True
 
             # Some words do not come with synonym/ antonym. They will be excluded
-            if tokens[token_idx][1] in ['DT']: #TODO
+            if tokens[token_idx][1] in ["DT"]:  # TODO
 
                 continue
 
@@ -208,7 +259,11 @@ class SynonymAug(WordAugmenter):
 
                 tokens[aug_idx] = substitute_token
 
-        return self.reverse_tokenizer(tokens) if self.reverse_tokenizer else ' '.join(tokens)
+        return (
+            self.reverse_tokenizer(tokens)
+            if self.reverse_tokenizer
+            else " ".join(tokens)
+        )
 
     @classmethod
     def get_model(cls, lang):
@@ -219,7 +274,6 @@ class SynonymAug(WordAugmenter):
             return min(self.aug_max, max(self.aug_min, math.ceil(size * self.aug_p)))
         else:
             return max(self.aug_min, min(size, math.ceil(size * self.aug_p)))
-
 
     def _get_aug_idxes(self, tokens):
         aug_cnt = self.generate_aug_cnt(len(tokens))
@@ -257,24 +311,58 @@ class SynonymAug(WordAugmenter):
 
 
 class ApplySynonymAug:
-    def __init__(self, lang_pair='en-fr', lang1='eng', lang2='fra', aug_max=10,
-                 name='Synonym_Aug', aug_min=1, aug_p=0.3,
-                 stopwords=None, tokenizer=None, reverse_tokenizer=None, stopwords_regex=None, verbose=0):
-        self.aug_en = SynonymAug(name=name, lang=lang1, aug_min=aug_min, aug_max=aug_max, aug_p=aug_p,
-                                  stopwords=stopwords, tokenizer=tokenizer, reverse_tokenizer=reverse_tokenizer,
-                                  stopwords_regex=stopwords_regex, verbose=verbose)
-        self.aug_fr = SynonymAug(name=name, lang=lang2, aug_min=aug_min, aug_max=aug_max, aug_p=aug_p,
-                                  stopwords=stopwords, tokenizer=tokenizer, reverse_tokenizer=reverse_tokenizer,
-                                  stopwords_regex=stopwords_regex, verbose=verbose)
+    def __init__(
+        self,
+        lang_pair="en-fr",
+        lang1="eng",
+        lang2="fra",
+        aug_max=10,
+        name="Synonym_Aug",
+        aug_min=1,
+        aug_p=0.3,
+        stopwords=None,
+        tokenizer=None,
+        reverse_tokenizer=None,
+        stopwords_regex=None,
+        verbose=0,
+    ):
+        self.aug_en = SynonymAug(
+            name=name,
+            lang=lang1,
+            aug_min=aug_min,
+            aug_max=aug_max,
+            aug_p=aug_p,
+            stopwords=stopwords,
+            tokenizer=tokenizer,
+            reverse_tokenizer=reverse_tokenizer,
+            stopwords_regex=stopwords_regex,
+            verbose=verbose,
+        )
+        self.aug_fr = SynonymAug(
+            name=name,
+            lang=lang2,
+            aug_min=aug_min,
+            aug_max=aug_max,
+            aug_p=aug_p,
+            stopwords=stopwords,
+            tokenizer=tokenizer,
+            reverse_tokenizer=reverse_tokenizer,
+            stopwords_regex=stopwords_regex,
+            verbose=verbose,
+        )
         self.l1 = lang_pair[:2]
         self.l2 = lang_pair[3:]
 
     def __call__(self, example):
-        original_translation = example['translation']
+        original_translation = example["translation"]
         if isinstance(original_translation, list):
             translations = []
             for translation in original_translation:
-                if isinstance(translation, dict) and self.l1 in translation and self.l2 in translation:
+                if (
+                    isinstance(translation, dict)
+                    and self.l1 in translation
+                    and self.l2 in translation
+                ):
                     en_text = translation[self.l1]
                     fr_text = translation[self.l2]
                     augmented_en = self.aug_en.substitute(en_text)
@@ -282,6 +370,6 @@ class ApplySynonymAug:
                     translations.append({self.l1: augmented_en, self.l2: augmented_fr})
                 else:
                     translations.append(translation)
-            return {'translation': translations}
+            return {"translation": translations}
         else:
             return example

@@ -26,8 +26,9 @@ def get_augmented_subset(cfg, augmenter, dataset):
     subset = get_subset(cfg, dataset["train"])
     if augmenter is not None:
         augmented_subset = subset.map(augmenter, batched=True, batch_size=1000)
-        dataset = concatenate_datasets([subset, augmented_subset]) #TODO
-    else: dataset = subset
+        dataset = concatenate_datasets([subset, augmented_subset])  # TODO
+    else:
+        dataset = subset
     return dataset
 
 
