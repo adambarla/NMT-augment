@@ -79,7 +79,9 @@ class Seq2Seq(nn.Module):
         for i in range(1, out_L):
             if i >= int(in_all_fin_idx * (buffer + 1)):
                 break
-            probs = F.softmax(self.forward(x, output[i - out_L - context_size: i])[-1], dim=-1)
+            probs = F.softmax(
+                self.forward(x, output[i - out_L - context_size : i])[-1], dim=-1
+            )
             output[i] = torch.multinomial(probs, num_samples=1).transpose(0, 1)
             out_fin |= output[i] == self.eos_token
             if out_fin.all():

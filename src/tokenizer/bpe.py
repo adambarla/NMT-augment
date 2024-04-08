@@ -22,7 +22,7 @@ class BPETokenizer:
         override=False,
         **kwargs,
     ):
-        self.split_pattern = r"""'(?i:[sdmt]|ll|ve|re)|[^\r\n\p{L}\p{N}]?+\p{L}+|\p{N}{1,3}| ?[^\s\p{L}\p{N}]++[\r\n]*|\s*[\r\n]|\s+(?!\S)|\s+""" # gpt 4 tok.
+        self.split_pattern = r"""'(?i:[sdmt]|ll|ve|re)|[^\r\n\p{L}\p{N}]?+\p{L}+|\p{N}{1,3}| ?[^\s\p{L}\p{N}]++[\r\n]*|\s*[\r\n]|\s+(?!\S)|\s+"""  # gpt 4 tok.
         self.lang = lang
         self.vocab_size = max_vocab_size
         self.seed = seed
@@ -102,14 +102,14 @@ class BPETokenizer:
             "fraction": self.fraction,
             "seed": self.seed,
             "lang": self.lang,
-            "split_pattern" : self.split_pattern
+            "split_pattern": self.split_pattern,
         }
         serialized_input = pickle.dumps(hash_input, protocol=pickle.HIGHEST_PROTOCOL)
         return hashlib.sha256(serialized_input).hexdigest()
 
     def _save(self, full_path):
         data = {
-            "split_pattern" : self.split_pattern,
+            "split_pattern": self.split_pattern,
             "lang": self.lang,
             "vocab": self.vocab,
             "merges": self.merges,
@@ -162,9 +162,14 @@ class BPETokenizer:
             for partition in dataset.values():
                 for example in partition:
                     if pr.rand() < self.fraction:
-                        s = example['translation'][self.lang]
-                        lst += [list(m.encode("utf-8")) for m in regex.findall(self.split_pattern, s)]
-                        pbar.set_description(f"unifying data, fraction={self.fraction}, n_tokens={len(lst)}")
+                        s = example["translation"][self.lang]
+                        lst += [
+                            list(m.encode("utf-8"))
+                            for m in regex.findall(self.split_pattern, s)
+                        ]
+                        pbar.set_description(
+                            f"unifying data, fraction={self.fraction}, examples={len(lst)}"
+                        )
                     pbar.update(1)
         return lst
 
@@ -197,7 +202,7 @@ class BPETokenizer:
         new_l = []
         i = 0
         while i < len(l) - 1:
-            if l[i] == el1 and l[i+1] == el2:
+            if l[i] == el1 and l[i + 1] == el2:
                 new_l.append(new_tok)
                 i += 2
             else:

@@ -38,7 +38,14 @@ def epoch_train(model, loader, optimizer, criterion, device, accelerator):
 
 
 def epoch_evaluate(
-    model, loader, criterion, device, accelerator, tokenizer_l1, tokenizer_l2, n_examples=3
+    model,
+    loader,
+    criterion,
+    device,
+    accelerator,
+    tokenizer_l1,
+    tokenizer_l2,
+    n_examples=3,
 ):
     epoch_loss = 0.0
     model.eval()
@@ -87,7 +94,7 @@ def train(
     val_loader,
     test_loader,
     tokenizer_l1,
-    tokenizer_l2
+    tokenizer_l2,
 ):
     for epoch in range(n_epochs):
         print(f"Epoch: {epoch + 1:>{len(str(n_epochs))}d}/{n_epochs}")
@@ -100,7 +107,13 @@ def train(
             accelerator,
         )
         valid_loss, valid_bleu = epoch_evaluate(
-            model, val_loader, criterion, device, accelerator, tokenizer_l1, tokenizer_l2
+            model,
+            val_loader,
+            criterion,
+            device,
+            accelerator,
+            tokenizer_l1,
+            tokenizer_l2,
         )
         wandb.log(
             {
@@ -130,11 +143,17 @@ def main(cfg):
     )
     device = get_device(cfg)
     dataset = get_dataset(cfg)
-    tokenizer_l1 = hydra.utils.instantiate(cfg.tokenizer, dataset=dataset, lang=cfg.data.l1)
+    tokenizer_l1 = hydra.utils.instantiate(
+        cfg.tokenizer, dataset=dataset, lang=cfg.data.l1
+    )
     print(f"Tokenizer {cfg.data.l1}:\n{tokenizer_l1}")
-    tokenizer_l2 = hydra.utils.instantiate(cfg.tokenizer, dataset=dataset, lang=cfg.data.l2)
+    tokenizer_l2 = hydra.utils.instantiate(
+        cfg.tokenizer, dataset=dataset, lang=cfg.data.l2
+    )
     print(f"Tokenizer {cfg.data.l2}:\n{tokenizer_l2}")
-    train_loader, val_loader, test_loader = get_dataloaders(cfg, tokenizer_l1, tokenizer_l2, dataset)
+    train_loader, val_loader, test_loader = get_dataloaders(
+        cfg, tokenizer_l1, tokenizer_l2, dataset
+    )
     train_loader, val_loader, test_loader = accelerator.prepare(
         train_loader, val_loader, test_loader
     )
@@ -164,7 +183,7 @@ def main(cfg):
         val_loader,
         test_loader,
         tokenizer_l1,
-        tokenizer_l2
+        tokenizer_l2,
     )
 
 
