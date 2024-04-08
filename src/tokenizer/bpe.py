@@ -191,19 +191,17 @@ class BPETokenizer:
         return pair_counts
 
     @staticmethod
-    def _merge_tokens(lst: list, pair: tuple, new_tok: int):
+    def _merge_tokens(l: list, pair: tuple, new_tok: int):
         el1, el2 = pair
         new_l = []
-        skip = False
-        t2 = None
-        for t1, t2 in zip(lst, lst[1:]):
-            if t1 == el1 and t2 == el2:
+        i = 0
+        while i < len(l) - 1:
+            if l[i] == el1 and l[i+1] == el2:
                 new_l.append(new_tok)
-                skip = True
-            elif skip:
-                skip = False
+                i += 2
             else:
-                new_l.append(t1)
-        if not skip and t2 is not None:
-            new_l.append(t2)
+                new_l.append(l[i])
+                i += 1
+        if i < len(l):
+            new_l.append(l[-1])
         return new_l
