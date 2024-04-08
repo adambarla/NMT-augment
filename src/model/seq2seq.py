@@ -1,4 +1,6 @@
 import sys
+from typing import Tuple, Any
+
 import torch
 import torch.nn.functional as F
 from torch import nn, Tensor
@@ -30,7 +32,7 @@ class Seq2Seq(nn.Module):
         self.eos_token = eos_token_id
 
     def forward(self, src: Tensor, tgt: Tensor):
-        # src: Length x Batch
+        # src: L x B
         # tgt: (L-1) x B
         src_emb = self.positional_encoding(self.src_tok_emb(src))
         tgt_emb = self.positional_encoding(self.tgt_tok_emb(tgt))
@@ -47,7 +49,7 @@ class Seq2Seq(nn.Module):
             tgt_padding_mask,
             src_padding_mask,
         )
-        # return = L x B x Vocab
+        # return = L x B x V
         return self.generator(outs)
 
     def encode(self, src: Tensor, src_mask: Tensor):
@@ -61,32 +63,33 @@ class Seq2Seq(nn.Module):
         )
 
     def translate(
-        self, x, buffer: float = 0.5, max_length: int = sys.maxsize, context_size=None
+        self,
+        x,
+        buffer: float = 0.0,
+        max_length: int = sys.maxsize,
+        context_size=sys.maxsize,
     ):
-        output = (
-            torch.ones(1, x.shape[1])
-            .fill_(self.bos_token)
-            .type(torch.long)
-            .to(self.device)
-        )
-        in_fin = torch.zeros(x.shape[1]).bool().to(self.device)
+        in_L, B = x.shape
+        in_fin = torch.zeros(B, dtype=torch.bool, device=self.device)
         in_all_fin_idx = sys.maxsize
-        out_fin = torch.zeros(x.shape[1]).bool().to(self.device)
-        for i in range(max_length):
-            if in_fin.all() and in_all_fin_idx == sys.maxsize:
-                in_all_fin_idx = i
-            if out_fin.all() or i > in_all_fin_idx * (buffer + 1):
+        out_fin = torch.zeros(B, dtype=torch.bool, device=self.device)
+        out_L = min(max_length, int(in_L * (buffer + 1)))
+        output = torch.empty((out_L, B), dtype=torch.long, device=self.device)
+        output[0] = self.bos_token
+        for i in range(1, out_L):
+            if i >= int(in_all_fin_idx * (buffer + 1)):
                 break
-            context = output[:, -context_size:] if context_size is not None else output
-            logits = self.forward(x, context)
-            logits = logits[-1, :, :]
-            probs = F.softmax(logits, dim=-1)
-            output_next = torch.multinomial(probs, num_samples=1).transpose(0, 1)
-            output = torch.cat([output, output_next], dim=0)
-            out_fin |= output_next.squeeze() == self.eos_token
-            if i < x.shape[0]:
-                in_fin |= x[i].squeeze() == self.eos_token
-        return output
+            probs = F.softmax(self.forward(x, output[i - out_L - context_size: i])[-1], dim=-1)
+            output[i] = torch.multinomial(probs, num_samples=1).transpose(0, 1)
+            out_fin |= output[i] == self.eos_token
+            if out_fin.all():
+                i += 1
+                break
+            if i < in_L:
+                in_fin |= x[i] == self.eos_token
+                if in_all_fin_idx == sys.maxsize and in_fin.all():
+                    in_all_fin_idx = i
+        return output[:i]
 
     def _generate_square_subsequent_mask(self, sz):
         mask = (torch.triu(torch.ones((sz, sz), device=self.device)) == 1).transpose(

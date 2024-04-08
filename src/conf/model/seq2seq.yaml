@@ -2,10 +2,10 @@ _target_: model.seq2seq.Seq2Seq
 transformer:
     _target_: torch.nn.Transformer
     d_model: ${emb_size} 
-    dim_feedforward: 128 # hidden embedding size
-    nhead: 4
-    num_encoder_layers: 1
-    num_decoder_layers: 1
+    dim_feedforward: ${d_ff} # hidden embedding size
+    nhead: ${n_head}
+    num_encoder_layers: ${n_layers}
+    num_decoder_layers: ${n_layers}
     dropout: ${dropout}
 
 src_tok_emb:

@@ -1,7 +1,3 @@
-"""
-Main script for training and testing the models.
-"""
-
 import hydra
 import torch
 import wandb
@@ -15,6 +11,8 @@ from utils import (
 )
 from omegaconf import OmegaConf
 from accelerate import Accelerator
+from sacrebleu import corpus_bleu
+import time
 
 
 def epoch_train(model, loader, optimizer, criterion, device, accelerator):
@@ -39,31 +37,43 @@ def epoch_train(model, loader, optimizer, criterion, device, accelerator):
     return epoch_loss / len(loader)
 
 
-def epoch_evaluate(model, loader, criterion, device, accelerator, tokenizer):
+def epoch_evaluate(
+    model, loader, criterion, device, accelerator, tokenizer, n_examples=3
+):
     epoch_loss = 0.0
     model.eval()
-    inputs = targets = None
+    hypotheses = []
+    references = []
+    inputs = None
     with torch.no_grad():
         with tqdm(total=len(loader), desc="Valid") as pbar:
             for i, batch in enumerate(loader):
                 inputs, targets = batch
-                inputs = inputs.transpose(0, 1).to(device)
+                inputs = inputs.transpose(0, 1).to(device)  # L x B
                 targets = targets.transpose(0, 1).to(device)
-                outputs = model(inputs, targets[:-1, :])
+                outputs = model(inputs, targets[:-1])  # L x B x V
                 loss = criterion(
-                    outputs.reshape(-1, outputs.shape[-1]), targets[1:, :].reshape(-1)
+                    outputs.reshape(-1, outputs.shape[-1]), targets[1:].reshape(-1)
                 )
                 epoch_loss += accelerator.gather(loss.item())
+                translations = model.translate(
+                    inputs, buffer=0.5, context_size=inputs.shape[0]
+                )
+                decoded_translations = tokenizer.decode(translations.transpose(0, 1))
+                decoded_targets = tokenizer.decode(targets.transpose(0, 1))
+                hypotheses += decoded_translations
+                references += decoded_targets
                 pbar.set_description(f"Valid Loss: {epoch_loss / (i + 1.0):.3f}")
                 pbar.update(1)
-        translations = model.translate(inputs[:, :3], context_size=inputs.shape[0])
-        for i in range(3):
+        for i in range(n_examples):
             print(
-                f"\n input: {tokenizer.decode(inputs[:,i])[0]}\n"
-                f"target: {tokenizer.decode(targets[:,i])[0]}\n"
-                f"output: {tokenizer.decode(translations[:,i])[0]}"
+                f"-\n input: {tokenizer.decode(inputs[:, i])[0]}\n"
+                f"target: {decoded_targets[i]}\n"
+                f"output: {decoded_translations[i]}",
             )
-    return epoch_loss / len(loader)
+    bleu_score = corpus_bleu(hypotheses, references).score
+    print(f"-\nBLEU score: {bleu_score:.2f}")
+    return epoch_loss / len(loader), bleu_score
 
 
 def train(
@@ -88,16 +98,22 @@ def train(
             device,
             accelerator,
         )
-        valid_loss = epoch_evaluate(
+        valid_loss, valid_bleu = epoch_evaluate(
             model, val_loader, criterion, device, accelerator, tokenizer
         )
-        wandb.log({"train_loss": train_loss, "valid_loss": valid_loss})
-        print("\n" + "-" * (len(str(n_epochs)) * 2 + 8))
-    test_loss = epoch_evaluate(
+        wandb.log(
+            {
+                "train_loss": train_loss,
+                "valid_loss": valid_loss,
+                "valid_bleu": valid_bleu,
+            }
+        )
+        print("-" * (len(str(n_epochs)) * 2 + 8))
+    test_loss, test_bleu = epoch_evaluate(
         model, test_loader, criterion, device, accelerator, tokenizer
     )
-    print(f" Test Loss: {test_loss:.3f} ")
-    wandb.log({"test_loss": test_loss})
+    print(f" Test Loss: {test_loss:.3f} | Test BLEU: {test_bleu:.2f}")
+    wandb.log({"test_loss": test_loss, "test_bleu": test_bleu})
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="main")

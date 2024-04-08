@@ -22,18 +22,16 @@ def get_subset(cfg, dataset):
 
 
 def get_dataloaders(cfg, tokenizer, dataset):
-    lang = cfg.data.lang
-    l1 = lang[:2]
-    l2 = lang[3:]
-    max_length = cfg.max_length
-    batch_size = cfg.batch_size
     col_fn_args = partial(
-        collate_fn, tokenizer=tokenizer, max_length=max_length, l1=l1, l2=l2
+        collate_fn,
+        tokenizer=tokenizer,
+        max_length=cfg.max_length,
+        l1=cfg.data.lang[:2],
+        l2=cfg.data.lang[3:],
     )
-
     train_dataloader = DataLoader(
         get_subset(cfg, dataset["train"]),
-        batch_size=batch_size,
+        batch_size=cfg.batch_size,
         collate_fn=col_fn_args,
         pin_memory=cfg.pin_memory,
         prefetch_factor=cfg.prefetch_factor,
@@ -43,7 +41,7 @@ def get_dataloaders(cfg, tokenizer, dataset):
     )
     val_dataloader = DataLoader(
         dataset["validation"],
-        batch_size=batch_size,
+        batch_size=cfg.batch_size,
         collate_fn=col_fn_args,
         pin_memory=cfg.pin_memory,
         prefetch_factor=cfg.prefetch_factor,
@@ -53,7 +51,7 @@ def get_dataloaders(cfg, tokenizer, dataset):
     )
     test_dataloader = DataLoader(
         dataset["test"],
-        batch_size=batch_size,
+        batch_size=cfg.batch_size,
         collate_fn=col_fn_args,
         pin_memory=cfg.pin_memory,
         prefetch_factor=cfg.prefetch_factor,
@@ -62,10 +60,9 @@ def get_dataloaders(cfg, tokenizer, dataset):
         shuffle=False,
     )
     dataloader_info = (
-        f"DataLoaders are set up with the following configurations:\n"
-        f"Train: samples={len(dataset['train']):<7d} batches={len(train_dataloader):<7d}\n"
-        f"Valid: samples={len(dataset['validation']):<7d} batches={len(val_dataloader):<7d}\n"
-        f"Test:  samples={len(dataset['test']):<7d} batches={len(test_dataloader):<7d}"
+        f"Train Dataloader: samples={len(dataset['train']):<7d} batches={len(train_dataloader):<7d}\n"
+        f"Valid Dataloader: samples={len(dataset['validation']):<7d} batches={len(val_dataloader):<7d}\n"
+        f"Test  Dataloader: samples={len(dataset['test']):<7d} batches={len(test_dataloader):<7d}"
     )
     print(dataloader_info)
     return train_dataloader, val_dataloader, test_dataloader
