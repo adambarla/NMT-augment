@@ -1,4 +1,6 @@
 import sys
+from typing import Tuple, Any
+
 import torch
 import torch.nn.functional as F
 from torch import nn, Tensor
@@ -67,25 +69,23 @@ class Seq2Seq(nn.Module):
         max_length: int = sys.maxsize,
         context_size=sys.maxsize,
     ):
-        # x = L x B
-        in_fin = torch.zeros(x.shape[1], dtype=torch.bool, device=self.device)
+        in_L, B = x.shape
+        in_fin = torch.zeros(B, dtype=torch.bool, device=self.device)
         in_all_fin_idx = sys.maxsize
-        out_fin = torch.zeros(x.shape[1], dtype=torch.bool, device=self.device)
-        max_possible_length = min(max_length, int(x.shape[0] * (buffer + 1)))
-        output = torch.empty(
-            (max_possible_length, x.shape[1]), dtype=torch.long, device=self.device
-        )
+        out_fin = torch.zeros(B, dtype=torch.bool, device=self.device)
+        out_L = min(max_length, int(in_L * (buffer + 1)))
+        output = torch.empty((out_L, B), dtype=torch.long, device=self.device)
         output[0] = self.bos_token
-        for i in range(1, max_length):
+        for i in range(1, out_L):
             if i >= int(in_all_fin_idx * (buffer + 1)):
                 break
-            probs = F.softmax(self.forward(x, output[-context_size:i])[-1], dim=-1)
+            probs = F.softmax(self.forward(x, output[i - out_L - context_size: i])[-1], dim=-1)
             output[i] = torch.multinomial(probs, num_samples=1).transpose(0, 1)
             out_fin |= output[i] == self.eos_token
             if out_fin.all():
                 i += 1
                 break
-            if i < x.shape[0]:
+            if i < in_L:
                 in_fin |= x[i] == self.eos_token
                 if in_all_fin_idx == sys.maxsize and in_fin.all():
                     in_all_fin_idx = i
