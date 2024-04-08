@@ -1,0 +1,12 @@
+_target_: augmentation.synonym.ApplySynonymAug
+lang_pair: ${lang}
+lang1: eng
+lang2: fra
+aug_min: 1
+aug_max: 10
+aug_p: 0.3
+stopwords: null
+tokenizer: null
+reverse_tokenizer: null
+stopwords_regex: null
+verbose: 0

@@ -1,6 +1,7 @@
 defaults:
     - _self_
     - tokenizer: bpe
+    - augmenter: synonym
     - model: seq2seq
     - optimizer: adamw
     - criterion: crossentropy
