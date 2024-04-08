@@ -6,7 +6,8 @@ defaults:
     - criterion: crossentropy
 data:
     name: wmt14
-    lang: cs-en # available 'cs-en', 'de-en', 'fr-en', 'hi-en', 'ru-en'
+    l1: cs # available combinations 'cs-en', 'de-en', 'fr-en', 'hi-en', 'ru-en'
+    l2: en
     dir: './data'
 
 wandb:
@@ -17,7 +18,7 @@ wandb:
 emb_size: 512
 d_ff: 2048
 n_head: 8
-n_layers: 6
+n_layer: 6
 vocab_size: 32000
 
 batch_size: 32

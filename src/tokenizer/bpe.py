@@ -12,6 +12,7 @@ class BPETokenizer:
     def __init__(
         self,
         dataset,
+        lang,
         max_vocab_size=10000,
         fraction=0.01,
         seed=42,
@@ -19,6 +20,7 @@ class BPETokenizer:
         override=False,
         **kwargs,
     ):
+        self.lang = lang
         self.vocab_size = max_vocab_size
         self.seed = seed
         self.fraction = fraction
@@ -90,18 +92,20 @@ class BPETokenizer:
 
     def _get_hash(self, dataset):
         hash_input = {
-            "dataset_hash": hashlib.sha256(
+            "dataset_jhash": hashlib.sha256(
                 pickle.dumps(dataset, protocol=pickle.HIGHEST_PROTOCOL)
             ).hexdigest(),
             "vocab_size": self.vocab_size,
             "fraction": self.fraction,
             "seed": self.seed,
+            "lang": self.lang
         }
         serialized_input = pickle.dumps(hash_input, protocol=pickle.HIGHEST_PROTOCOL)
         return hashlib.sha256(serialized_input).hexdigest()
 
     def _save(self, full_path):
         data = {
+            "lang": self.lang,
             "vocab": self.vocab,
             "merges": self.merges,
             "vocab_size": self.vocab_size,
@@ -119,6 +123,7 @@ class BPETokenizer:
     def _load(self, path):
         with open(path, "rb") as f:
             data = pickle.load(f)
+        self.lang = data["lang"]
         self.vocab = data["vocab"]
         self.merges = data["merges"]
         self.vocab_size = data["vocab_size"]
@@ -152,9 +157,8 @@ class BPETokenizer:
             for partition in dataset.values():
                 for example in partition:
                     if pr.rand() < self.fraction:
-                        for l_example in example["translation"].values():
-                            s = l_example.encode("utf-8")
-                            lst.extend(list(s) + list(space))
+                        s = example['translation'][self.lang].encode("utf-8")
+                        lst.extend(list(s) + list(space))
                         pbar.set_description(f"unifying data, n_tokens={len(lst)}")
                     pbar.update(1)
         return lst

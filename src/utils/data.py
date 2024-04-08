@@ -8,7 +8,7 @@ from utils.random import PersistentRandom
 
 def get_dataset(cfg):
     name = cfg.data.name
-    lang = cfg.data.lang
+    lang = f"{cfg.data.l1}-{cfg.data.l2}"
     directory = cfg.data.dir
     dataset = load_dataset(name, lang, cache_dir=directory)
     return dataset
@@ -21,13 +21,14 @@ def get_subset(cfg, dataset):
     return dataset.select(permutation)
 
 
-def get_dataloaders(cfg, tokenizer, dataset):
+def get_dataloaders(cfg, tokenizer_l1, tokenizer_l2, dataset):
     col_fn_args = partial(
         collate_fn,
-        tokenizer=tokenizer,
+        tokenizer_l1=tokenizer_l1,
+        tokenizer_l2=tokenizer_l2,
         max_length=cfg.max_length,
-        l1=cfg.data.lang[:2],
-        l2=cfg.data.lang[3:],
+        l1=cfg.data.l1,
+        l2=cfg.data.l2,
     )
     train_dataloader = DataLoader(
         get_subset(cfg, dataset["train"]),
@@ -68,11 +69,11 @@ def get_dataloaders(cfg, tokenizer, dataset):
     return train_dataloader, val_dataloader, test_dataloader
 
 
-def collate_fn(batch, tokenizer, max_length, l1, l2):
+def collate_fn(batch, tokenizer_l1, tokenizer_l2, max_length, l1, l2):
     src_batch, tgt_batch = [], []
     for item in batch:
         src_batch.append(
-            tokenizer.encode(
+            tokenizer_l1.encode(
                 item["translation"][l1],
                 truncation=True,
                 padding="max_length",
@@ -80,7 +81,7 @@ def collate_fn(batch, tokenizer, max_length, l1, l2):
             )
         )
         tgt_batch.append(
-            tokenizer.encode(
+            tokenizer_l2.encode(
                 item["translation"][l2],
                 truncation=True,
                 padding="max_length",
@@ -90,11 +91,11 @@ def collate_fn(batch, tokenizer, max_length, l1, l2):
     src_batch = pad_sequence(
         [torch.tensor(x) for x in src_batch],
         batch_first=True,
-        padding_value=tokenizer.pad_token_id,
+        padding_value=tokenizer_l1.pad_token_id,
     )
     tgt_batch = pad_sequence(
         [torch.tensor(y) for y in tgt_batch],
         batch_first=True,
-        padding_value=tokenizer.pad_token_id,
+        padding_value=tokenizer_l2.pad_token_id,
     )
     return src_batch, tgt_batch

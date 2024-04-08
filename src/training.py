@@ -38,7 +38,7 @@ def epoch_train(model, loader, optimizer, criterion, device, accelerator):
 
 
 def epoch_evaluate(
-    model, loader, criterion, device, accelerator, tokenizer, n_examples=3
+    model, loader, criterion, device, accelerator, tokenizer_l1, tokenizer_l2, n_examples=3
 ):
     epoch_loss = 0.0
     model.eval()
@@ -59,15 +59,15 @@ def epoch_evaluate(
                 translations = model.translate(
                     inputs, buffer=0.5, context_size=inputs.shape[0]
                 )
-                decoded_translations = tokenizer.decode(translations.transpose(0, 1))
-                decoded_targets = tokenizer.decode(targets.transpose(0, 1))
+                decoded_translations = tokenizer_l2.decode(translations.transpose(0, 1))
+                decoded_targets = tokenizer_l2.decode(targets.transpose(0, 1))
                 hypotheses += decoded_translations
                 references += decoded_targets
                 pbar.set_description(f"Valid Loss: {epoch_loss / (i + 1.0):.3f}")
                 pbar.update(1)
         for i in range(n_examples):
             print(
-                f"-\n input: {tokenizer.decode(inputs[:, i])[0]}\n"
+                f"-\n input: {tokenizer_l1.decode(inputs[:, i])[0]}\n"
                 f"target: {decoded_targets[i]}\n"
                 f"output: {decoded_translations[i]}",
             )
@@ -86,7 +86,8 @@ def train(
     train_loader,
     val_loader,
     test_loader,
-    tokenizer,
+    tokenizer_l1,
+    tokenizer_l2
 ):
     for epoch in range(n_epochs):
         print(f"Epoch: {epoch + 1:>{len(str(n_epochs))}d}/{n_epochs}")
@@ -99,7 +100,7 @@ def train(
             accelerator,
         )
         valid_loss, valid_bleu = epoch_evaluate(
-            model, val_loader, criterion, device, accelerator, tokenizer
+            model, val_loader, criterion, device, accelerator, tokenizer_l1, tokenizer_l2
         )
         wandb.log(
             {
@@ -110,7 +111,7 @@ def train(
         )
         print("-" * (len(str(n_epochs)) * 2 + 8))
     test_loss, test_bleu = epoch_evaluate(
-        model, test_loader, criterion, device, accelerator, tokenizer
+        model, test_loader, criterion, device, accelerator, tokenizer_l1, tokenizer_l2
     )
     print(f" Test Loss: {test_loss:.3f} | Test BLEU: {test_bleu:.2f}")
     wandb.log({"test_loss": test_loss, "test_bleu": test_bleu})
@@ -127,21 +128,25 @@ def main(cfg):
         log_with="wandb",
         # logging_dir="logs" # unexpected argument?
     )
-
     device = get_device(cfg)
     dataset = get_dataset(cfg)
-    tokenizer = hydra.utils.instantiate(cfg.tokenizer, dataset=dataset)
-    print(f"Tokenizer:\n{tokenizer}")
-    train_loader, val_loader, test_loader = get_dataloaders(cfg, tokenizer, dataset)
+    tokenizer_l1 = hydra.utils.instantiate(cfg.tokenizer, dataset=dataset, lang=cfg.data.l1)
+    print(f"Tokenizer {cfg.data.l1}:\n{tokenizer_l1}")
+    tokenizer_l2 = hydra.utils.instantiate(cfg.tokenizer, dataset=dataset, lang=cfg.data.l2)
+    print(f"Tokenizer {cfg.data.l2}:\n{tokenizer_l2}")
+    train_loader, val_loader, test_loader = get_dataloaders(cfg, tokenizer_l1, tokenizer_l2, dataset)
     train_loader, val_loader, test_loader = accelerator.prepare(
         train_loader, val_loader, test_loader
     )
+    assert tokenizer_l1.pad_token_id == tokenizer_l2.pad_token_id
+    assert tokenizer_l1.bos_token_id == tokenizer_l2.bos_token_id
+    assert tokenizer_l1.eos_token_id == tokenizer_l2.eos_token_id
     model = hydra.utils.instantiate(
         cfg.model,
         device=device,
-        pad_token_id=tokenizer.pad_token_id,
-        bos_token_id=tokenizer.bos_token_id,
-        eos_token_id=tokenizer.eos_token_id,
+        pad_token_id=tokenizer_l1.pad_token_id,
+        bos_token_id=tokenizer_l1.bos_token_id,
+        eos_token_id=tokenizer_l1.eos_token_id,
     )
     model.to(device)
     print(f"Model:\n{model}")
@@ -158,7 +163,8 @@ def main(cfg):
         train_loader,
         val_loader,
         test_loader,
-        tokenizer,
+        tokenizer_l1,
+        tokenizer_l2
     )
 
 
