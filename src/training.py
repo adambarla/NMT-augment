@@ -132,7 +132,9 @@ def main(cfg):
     dataset = get_dataset(cfg)
     tokenizer = hydra.utils.instantiate(cfg.tokenizer, dataset=dataset)
     print(f"Tokenizer:\n{tokenizer}")
-    train_loader, val_loader, test_loader = get_dataloaders(cfg, tokenizer, dataset)
+    augmenter = hydra.utils.instantiate(cfg.augmenter)
+    print(f"Augmenter:\n{augmenter}")
+    train_loader, val_loader, test_loader = get_dataloaders(cfg, tokenizer, augmenter, dataset)
     train_loader, val_loader, test_loader = accelerator.prepare(
         train_loader, val_loader, test_loader
     )

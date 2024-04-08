@@ -1,6 +1,6 @@
 from functools import partial
 import torch
-from datasets import load_dataset, Dataset
+from datasets import load_dataset, Dataset, concatenate_datasets
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader
 from utils.random import PersistentRandom
@@ -21,7 +21,17 @@ def get_subset(cfg, dataset):
     return dataset.select(permutation)
 
 
-def get_dataloaders(cfg, tokenizer, dataset):
+def get_augmented_subset(cfg, augmenter, dataset):
+
+    subset = get_subset(cfg, dataset["train"])
+    if augmenter is not None:
+        augmented_subset = subset.map(augmenter, batched=True, batch_size=1000)
+        dataset = concatenate_datasets([subset, augmented_subset]) #TODO
+    else: dataset = subset
+    return dataset
+
+
+def get_dataloaders(cfg, tokenizer, augmenter, dataset):
     col_fn_args = partial(
         collate_fn,
         tokenizer=tokenizer,
@@ -30,7 +40,7 @@ def get_dataloaders(cfg, tokenizer, dataset):
         l2=cfg.data.lang[3:],
     )
     train_dataloader = DataLoader(
-        get_subset(cfg, dataset["train"]),
+        get_augmented_subset(cfg, augmenter, dataset["train"]),
         batch_size=cfg.batch_size,
         collate_fn=col_fn_args,
         pin_memory=cfg.pin_memory,
