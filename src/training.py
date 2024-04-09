@@ -95,7 +95,11 @@ def train(
     test_loader,
     tokenizer_l1,
     tokenizer_l2,
+    patience
 ):
+    min_loss = sys.maxsize
+    epochs_since_improvement = 0
+    epoch = 0
     for epoch in range(n_epochs):
         print(f"Epoch: {epoch + 1:>{len(str(n_epochs))}d}/{n_epochs}")
         train_loss = epoch_train(
@@ -122,7 +126,19 @@ def train(
                 "valid_bleu": valid_bleu,
             }
         )
+        if valid_loss < min_loss:
+            min_loss = valid_loss
+            epochs_since_improvement = 0
+        else:
+            epochs_since_improvement += 1
+        if epochs_since_improvement >= patience:
+            break
         print("-" * (len(str(n_epochs)) * 2 + 8))
+    if epochs_since_improvement >= patience:
+        print(
+            f"Early stopping triggered in epoch {epoch + 1}, "
+            f"validation loss hasn't improved for {epochs_since_improvement} epochs."
+        )
     test_loss, test_bleu = epoch_evaluate(
         model, test_loader, criterion, device, accelerator, tokenizer_l1, tokenizer_l2
     )
@@ -184,6 +200,7 @@ def main(cfg):
         test_loader,
         tokenizer_l1,
         tokenizer_l2,
+        patience=cfg.patience
     )
 
 

@@ -39,4 +39,4 @@ prefetch_factor: 4 # how many subprocesses to use for data loading. 0 means that
 num_workers: 4 # number of batches loaded in advance by each worker.
 persistent_workers: true # if true, the data loader will not shut down the worker processes after a dataset has been consumed once
 
-patience: 5 # number of epochs to wait for improvement before stopping the run
+patience: 3 # number of epochs to wait for improvement before stopping the run
