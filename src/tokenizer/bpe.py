@@ -41,7 +41,7 @@ class BPETokenizer:
     ):
         encoded = list(x.encode("utf-8"))
         while len(encoded) > 1:
-            pairs = Counter(pair for pair in zip(x, x[1:]))
+            pairs = Counter(zip(encoded, encoded[1:]))
             to_merge = min(pairs, key=lambda k: self.merges.get(k, float("inf")))
             if to_merge not in self.merges:
                 break
