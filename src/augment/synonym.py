@@ -380,9 +380,7 @@ class ApplySynonymAug:
                     augmented_fr = (
                         self.aug_fr.substitute(fr_text) if self.aug_fr else fr_text
                     )
-                    translations.append(
-                        {self.l1: augmented_en, self.l2: augmented_fr}
-                    )
+                    translations.append({self.l1: augmented_en, self.l2: augmented_fr})
                 else:
                     translations.append(translation)
             return {"translation": translations}
