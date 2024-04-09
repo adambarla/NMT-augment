@@ -1,4 +1,4 @@
-from wordaugmenter import WordAugmenter
+from augment.wordaugmenter import WordAugmenter
 import nltk
 from nltk.corpus import wordnet
 import random, re

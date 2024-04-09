@@ -1,7 +1,7 @@
-_target_: augmentation.synonym.ApplySynonymAug
-lang_pair: ${lang}
-lang1: eng
-lang2: fra
+_target_: augment.synonym.ApplySynonymAug
+lang_pair: ${data.lang}
+lang1: fra
+lang2: eng
 aug_min: 1
 aug_max: 10
 aug_p: 0.3
