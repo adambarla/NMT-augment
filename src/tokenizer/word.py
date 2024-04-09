@@ -4,7 +4,8 @@ import copy
 
 
 class WordTokenizer:
-    def __init__(self, dataset, max_vocab_size=10000, min_freq=1, **kwargs):
+    def __init__(self, dataset, lang, max_vocab_size=10000, min_freq=1, **kwargs):
+        self.lang = lang
         self.max_vocab_size = max_vocab_size
         self.min_freq = min_freq
         self.special_tokens = ["<s>", "<pad>", "</s>", "<unk>"]
@@ -16,6 +17,12 @@ class WordTokenizer:
         self.bos_token_id = self._stoi["<s>"]
         self.eos_token_id = self._stoi["</s>"]
         self.unk_token_id = self._stoi["<unk>"]
+        self.special_token_ids = [
+            self.bos_token_id,
+            self.pad_token_id,
+            self.eos_token_id,
+            self.unk_token_id,
+        ]
 
     def encode(
         self,
@@ -31,7 +38,6 @@ class WordTokenizer:
             words = x
         else:
             raise TypeError("Input must be a string or a list.")
-
         encoded = [self._stoi.get(w, self.unk_token_id) for w in words]
         if truncation and max_length is not None:
             encoded = encoded[: max_length - (2 if add_special_tokens else 0)]
@@ -42,29 +48,20 @@ class WordTokenizer:
         return encoded
 
     def decode(self, x):
-        special_token_ids = [
-            self.bos_token_id,
-            self.pad_token_id,
-            self.eos_token_id,
-            self.unk_token_id,
-        ]
         if isinstance(x, torch.Tensor):
             x = x.tolist()
         if isinstance(x, list) and (not x or isinstance(x[0], int)):
             x = [x]
-        decoded_text = [
-            " ".join([self._itos[w] for w in seq if w not in special_token_ids])
+        return [
+            " ".join([self._itos[w] for w in seq if w not in self.special_token_ids])
             for seq in x
         ]
-        return decoded_text
 
     def _create_vocab(self, dataset):
         word_counts = Counter()
         for i in dataset:
             for r in dataset[i]:
-                for t in r["translation"]:
-                    word_counts.update(r["translation"][t].split())
-
+                word_counts.update(r["translation"][self.lang].split())
         vocab = copy.deepcopy(self.special_tokens)
         vocab.extend(
             [

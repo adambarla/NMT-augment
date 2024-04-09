@@ -4,8 +4,8 @@ transformer:
     d_model: ${emb_size} 
     dim_feedforward: ${d_ff} # hidden embedding size
     nhead: ${n_head}
-    num_encoder_layers: ${n_layers}
-    num_decoder_layers: ${n_layers}
+    num_encoder_layers: ${n_layer}
+    num_decoder_layers: ${n_layer}
     dropout: ${dropout}
 
 src_tok_emb:

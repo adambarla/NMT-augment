@@ -1,0 +1,36 @@
+program: training.py
+name: 5_expanded_classifier
+entity: crutch
+project: "Data Augmentation for Neural Machine Translation"
+method: grid
+run_cap: 100
+metric:
+    goal: minimize
+    name: valid_loss
+parameters:
+    lr:
+        values: [1,0.1,0.01,0.001,0.001,0.0001,0.00001]
+#    emb_size:
+#        values: [124, 256, 512]
+#    batch_size:
+#        values: [16, 32, 64, 128]
+#    d_ff:
+#        values: [256, 512, 1024, 2048]
+#    n_head:
+#        values: [2,4,8]
+#    n_layer:
+#        values: [2,4,6]
+#    vocab_size:
+#        values: [10000, 20000, 32000]
+command:
+    - ${env}
+    - python3
+    - ${program}
+    - n_layer=2
+    - n_head=4
+    - emb_size=512
+    - d_ff=512
+    - batch_size=64
+    - patience=3
+    - vocab_size=32000
+    - ${args_no_hyphens}
