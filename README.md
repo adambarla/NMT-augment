@@ -27,6 +27,18 @@ Same goes for all other parameter defined in `src/conf/`.
 
 We use [Accelerate](https://huggingface.co/docs/accelerate/en/index) to leverage hardware accelerators for mixed precision training, gradient accumulation, and logging with [Weights & Biases](https://wandb.ai/site) (wandb). The Accelerator object is instantiated with the desired settings, e.g., `accelerator = Accelerator(mixed_precision='fp16', log_with='wandb')`.
 
+## Hyperparameter Tuning
+
+We use wandb sweep. Run
+```bash
+wandb sweep conf/sweep/<sweep_name>.yaml
+```
+which produces a command like this:
+```
+wandb agent ...
+```
+which will start the tuning. This way the tuning can be done on multiple machines at once.
+
 ## Data
 
 WMT 2014 English-to-German. WMT 2014 is a collection of datasets used in shared tasks of the Ninth Workshop on Statistical Machine Translation. WMT 2014 English-to-German is one of the most common datasets from WMT
