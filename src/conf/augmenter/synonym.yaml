@@ -1,6 +1,7 @@
 _target_: augment.synonym.ApplySynonymAug
-lang_pair: ${data.lang}
-lang1: fra
+l1: ${data.l1}
+l2: ${data.l2}
+lang1: null
 lang2: eng
 aug_min: 1
 aug_max: 10
