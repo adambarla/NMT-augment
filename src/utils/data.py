@@ -17,7 +17,7 @@ def get_dataset(cfg):
 def get_subset(cfg, dataset):
     persistent_random = PersistentRandom(seed=cfg.seed)
     limited_size = min(len(dataset), cfg.subset_size or len(dataset))
-    permutation = persistent_random.permutation(range(len(dataset))[:limited_size])
+    permutation = persistent_random.permutation(range(len(dataset)))[:limited_size]
     return dataset.select(permutation)
 
 
