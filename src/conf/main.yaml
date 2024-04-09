@@ -7,7 +7,7 @@ defaults:
     - criterion: crossentropy
 data:
     name: wmt14
-    lang: fr-en # available 'cs-en', 'de-en', 'fr-en', 'hi-en', 'ru-en'
+    lang: cs-en # available 'cs-en', 'de-en', 'fr-en', 'hi-en', 'ru-en'
     dir: './data'
 
 wandb:
