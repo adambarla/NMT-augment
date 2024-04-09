@@ -99,8 +99,8 @@ def main(cfg):
     )
     print(f"Tokenizer {cfg.data.l2}:\n{tokenizer_l2}")
     augmenter = None
-    if not(cfg.augmenter=={}):
-      augmenter = hydra.utils.instantiate(cfg.augmenter)
+    if not (cfg.augmenter == {}):
+        augmenter = hydra.utils.instantiate(cfg.augmenter)
     print(f"Augmenter:\n{augmenter}")
     train_loader, val_loader, test_loader = get_dataloaders(
         cfg, tokenizer_l1, tokenizer_l2, augmenter, dataset
