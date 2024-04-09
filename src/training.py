@@ -6,7 +6,9 @@ from utils import (
     set_deterministic,
     get_dataloaders,
     get_device,
-    get_dataset, epoch_train, epoch_evaluate,
+    get_dataset,
+    epoch_train,
+    epoch_evaluate,
 )
 from omegaconf import OmegaConf
 from accelerate import Accelerator
@@ -24,7 +26,7 @@ def train(
     test_loader,
     tokenizer_l1,
     tokenizer_l2,
-    patience
+    patience,
 ):
     min_loss = sys.maxsize
     epochs_since_improvement = 0
@@ -129,7 +131,7 @@ def main(cfg):
         test_loader,
         tokenizer_l1,
         tokenizer_l2,
-        patience=cfg.patience
+        patience=cfg.patience,
     )
 
 
