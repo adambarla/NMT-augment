@@ -9,11 +9,10 @@ def epoch_train(model, loader, optimizer, criterion, device, accelerator):
     model.train()
     with tqdm(total=len(loader), desc="Training Progress") as pbar:
         for i, batch in enumerate(loader):
-            batch.to(accelerator.device)
             optimizer.zero_grad()
             inputs, targets = batch
-            inputs = inputs.transpose(0, 1)#.to(device)
-            targets = targets.transpose(0, 1)#.to(device)
+            inputs = inputs.transpose(0, 1).to(accelerator.device)
+            targets = targets.transpose(0, 1).to(accelerator.device)
             outputs = model(inputs, targets[:-1, :])
             loss = criterion(
                 outputs.reshape(-1, outputs.shape[-1]), targets[1:, :].reshape(-1)
@@ -45,10 +44,9 @@ def epoch_evaluate(
     with torch.no_grad():
         with tqdm(total=len(loader), desc="Valid") as pbar:
             for i, batch in enumerate(loader):
-                batch.to(accelerator.device)
                 inputs, targets = batch
-                inputs = inputs.transpose(0, 1)#.to(device)  # L x B
-                targets = targets.transpose(0, 1)#.to(device)
+                inputs = inputs.transpose(0, 1).to(accelerator.device)  # L x B
+                targets = targets.transpose(0, 1).to(accelerator.device)
                 outputs = model(inputs, targets[:-1])  # L x B x V
                 loss = criterion(
                     outputs.reshape(-1, outputs.shape[-1]), targets[1:].reshape(-1)
