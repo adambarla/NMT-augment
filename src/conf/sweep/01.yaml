@@ -1,5 +1,5 @@
 program: training.py
-name: 5_expanded_classifier
+name: tune_lr
 entity: crutch
 project: "Data Augmentation for Neural Machine Translation"
 method: grid
@@ -9,7 +9,7 @@ metric:
     name: valid_loss
 parameters:
     lr:
-        values: [1,0.1,0.01,0.001,0.001,0.0001,0.00001]
+        values: [0.1,0.01,0.001,0.001,0.0001,0.00001]
 #    emb_size:
 #        values: [124, 256, 512]
 #    batch_size:
