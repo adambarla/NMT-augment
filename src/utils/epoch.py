@@ -17,10 +17,21 @@ def epoch_train(model, loader, optimizer, criterion, device, accelerator):
             loss = criterion(
                 outputs.reshape(-1, outputs.shape[-1]), targets[1:, :].reshape(-1)
             )
+
+            #print("loss value: ", loss)
+            #print("loss type: ", type(loss))
+
             accelerator.backward(loss)
             optimizer.step()
-            epoch_loss += accelerator.gather(loss.item())
-            pbar.set_description(f"Train Loss: {epoch_loss / (i + 1.0):.3f}")
+
+            #print("loss value: ", loss)
+            #print("loss type: ", type(loss))
+
+#            epoch_loss += accelerator.gather(loss.item())
+#            epoch_loss += accelerator.gather(loss.detach())
+            epoch_loss += torch.mean(accelerator.gather(loss.detach()))
+#            pbar.set_description(f"Train Loss: {epoch_loss / (i + 1.0):.3f}")
+            pbar.set_description(f"Train Loss: {(epoch_loss / (i + 1.0)).item():.3f}")
             pbar.update(1)
     return epoch_loss / len(loader)
 

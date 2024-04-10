@@ -30,7 +30,7 @@ command:
     - n_head=4
     - emb_size=512
     - d_ff=512
-    - batch_size=64
+    - batch_size=32
     - patience=3
     - vocab_size=32000
     - ${args_no_hyphens}
