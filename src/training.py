@@ -88,7 +88,8 @@ def main(cfg):
         log_with="wandb",
         # logging_dir="logs" # unexpected argument?
     )
-    device = get_device(cfg)
+    # device = get_device(cfg)
+    device = accelerator.device
     dataset = get_dataset(cfg)
     tokenizer_l1 = hydra.utils.instantiate(
         cfg.tokenizer, dataset=dataset, lang=cfg.data.l1

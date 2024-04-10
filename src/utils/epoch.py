@@ -5,7 +5,6 @@ from tqdm import tqdm
 
 def epoch_train(model, loader, optimizer, criterion, device, accelerator):
     epoch_loss = 0.0
-
     model.train()
     with tqdm(total=len(loader), desc="Training Progress") as pbar:
         for i, batch in enumerate(loader):
