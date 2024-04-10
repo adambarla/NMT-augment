@@ -3,7 +3,7 @@ from sacrebleu import corpus_bleu
 from tqdm import tqdm
 
 
-def epoch_train(model, loader, optimizer, criterion, device, accelerator):
+def epoch_train(model, loader, optimizer, criterion, accelerator):
     epoch_loss = 0.0
     model.train()
     with tqdm(total=len(loader), desc="Training Progress") as pbar:
@@ -29,7 +29,6 @@ def epoch_evaluate(
     model,
     loader,
     criterion,
-    device,
     accelerator,
     tokenizer_l1,
     tokenizer_l2,

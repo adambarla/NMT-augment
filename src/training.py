@@ -1,21 +1,19 @@
 import sys
 import hydra
 import wandb
+from accelerate import Accelerator
+from omegaconf import OmegaConf
 from utils import (
     init_wandb,
     set_deterministic,
     get_dataloaders,
-    get_device,
     get_dataset,
     epoch_train,
     epoch_evaluate,
 )
-from omegaconf import OmegaConf
-from accelerate import Accelerator
 
 
 def train(
-    device,
     model,
     optimizer,
     criterion,
@@ -38,14 +36,12 @@ def train(
             train_loader,
             optimizer,
             criterion,
-            device,
             accelerator,
         )
         valid_loss, valid_bleu = epoch_evaluate(
             model,
             val_loader,
             criterion,
-            device,
             accelerator,
             tokenizer_l1,
             tokenizer_l2,
@@ -88,17 +84,17 @@ def main(cfg):
         log_with="wandb",
         # logging_dir="logs" # unexpected argument?
     )
-    # device = get_device(cfg)
     device = accelerator.device
+    print(f"Device: {device}")
     dataset = get_dataset(cfg)
+    print(f"Tokenizer {cfg.data.l1}:")
     tokenizer_l1 = hydra.utils.instantiate(
         cfg.tokenizer, dataset=dataset, lang=cfg.data.l1
     )
-    print(f"Tokenizer {cfg.data.l1}:\n{tokenizer_l1}")
+    print(f"Tokenizer {cfg.data.l2}:")
     tokenizer_l2 = hydra.utils.instantiate(
         cfg.tokenizer, dataset=dataset, lang=cfg.data.l2
     )
-    print(f"Tokenizer {cfg.data.l2}:\n{tokenizer_l2}")
     train_loader, val_loader, test_loader = get_dataloaders(
         cfg, tokenizer_l1, tokenizer_l2, dataset
     )
@@ -113,18 +109,15 @@ def main(cfg):
         eos_token_id=tokenizer_l1.eos_token_id,
     )
     model.to(accelerator.device)
-    #model.to(device)
     print(f"Model:\n{model}")
+    total_params = sum(p.numel() for p in model.parameters())
+    print(f"Number of parameters: {total_params}")
     optimizer = hydra.utils.instantiate(cfg.optimizer, model.parameters())
     print(f"Optimizer:\n{optimizer}")
     criterion = hydra.utils.instantiate(cfg.criterion)
-
-    #add accelerator
     train_loader, val_loader, test_loader, model, optimizer = accelerator.prepare(
         train_loader, val_loader, test_loader, model, optimizer)
-
     train(
-        device,
         model,
         optimizer,
         criterion,
@@ -137,7 +130,6 @@ def main(cfg):
         tokenizer_l2,
         patience=cfg.patience,
     )
-
 
 if __name__ == "__main__":
     main()
