@@ -111,6 +111,7 @@ def main(cfg):
         bos_token_id=tokenizer_l1.bos_token_id,
         eos_token_id=tokenizer_l1.eos_token_id,
     )
+    model.to(accelerator.device)
     #model.to(device)
     print(f"Model:\n{model}")
     optimizer = hydra.utils.instantiate(cfg.optimizer, model.parameters())
