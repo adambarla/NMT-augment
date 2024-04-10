@@ -1,0 +1,13 @@
+_target_: augment.synonym.ApplySynonymAug
+l1: ${data.l1}
+l2: ${data.l2}
+lang1: null
+lang2: eng
+aug_min: 1
+aug_max: 10
+aug_p: 0.3
+stopwords: null
+tokenizer: null
+reverse_tokenizer: null
+stopwords_regex: null
+verbose: 0

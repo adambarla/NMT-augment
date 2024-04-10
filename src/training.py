@@ -98,8 +98,12 @@ def main(cfg):
         cfg.tokenizer, dataset=dataset, lang=cfg.data.l2
     )
     print(f"Tokenizer {cfg.data.l2}:\n{tokenizer_l2}")
+    augmenter = None
+    if cfg.augmenter is not None:
+        augmenter = hydra.utils.instantiate(cfg.augmenter)
+    print(f"Augmentation:\n{augmenter or 'No augmentations used.'}")
     train_loader, val_loader, test_loader = get_dataloaders(
-        cfg, tokenizer_l1, tokenizer_l2, dataset
+        cfg, tokenizer_l1, tokenizer_l2, augmenter, dataset
     )
     train_loader, val_loader, test_loader = accelerator.prepare(
         train_loader, val_loader, test_loader
@@ -115,9 +119,9 @@ def main(cfg):
         eos_token_id=tokenizer_l1.eos_token_id,
     )
     model.to(device)
-    print(f"Model:\n{model}")
+    print(f"Model:\n{model}\n")
     optimizer = hydra.utils.instantiate(cfg.optimizer, model.parameters())
-    print(f"Optimizer:\n{optimizer}")
+    print(f"Optimizer:\n{optimizer}\n")
     criterion = hydra.utils.instantiate(cfg.criterion)
     train(
         device,
