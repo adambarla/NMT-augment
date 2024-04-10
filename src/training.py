@@ -101,9 +101,6 @@ def main(cfg):
     train_loader, val_loader, test_loader = get_dataloaders(
         cfg, tokenizer_l1, tokenizer_l2, dataset
     )
-#    train_loader, val_loader, test_loader = accelerator.prepare(
-#        train_loader, val_loader, test_loader
-#    )
     assert tokenizer_l1.pad_token_id == tokenizer_l2.pad_token_id
     assert tokenizer_l1.bos_token_id == tokenizer_l2.bos_token_id
     assert tokenizer_l1.eos_token_id == tokenizer_l2.eos_token_id
