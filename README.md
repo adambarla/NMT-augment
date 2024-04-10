@@ -21,7 +21,7 @@ python -m training
 For changing hyperparameters we used [hydra](https://hydra.cc/docs/intro/). For example, to change the languages the model trains on, you can run:
 
 ```bash
-python -m training.py data.lang="de-en"
+python -m training.py l1=de l2=en
 ```
 Same goes for all other parameter defined in `src/conf/`.
 
