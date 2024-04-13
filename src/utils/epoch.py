@@ -49,9 +49,14 @@ def epoch_evaluate(
                     outputs.reshape(-1, outputs.shape[-1]), targets[1:].reshape(-1)
                 )
                 epoch_loss += accelerator.gather(loss).mean().item()
-                translations = model.translate(
-                    inputs, buffer=0.5, context_size=inputs.shape[0]
-                )
+                if isinstance(model, torch.nn.parallel.DistributedDataParallel):
+                    translations = model.module.translate(
+                        inputs, buffer=0.5, context_size=inputs.shape[0]
+                    )
+                else:
+                    translations = model.translate(
+                        inputs, buffer=0.5, context_size=inputs.shape[0]
+                    )
                 decoded_translations = tokenizer_l2.decode(translations.transpose(0, 1))
                 decoded_targets = tokenizer_l2.decode(targets.transpose(0, 1))
                 hypotheses += decoded_translations
