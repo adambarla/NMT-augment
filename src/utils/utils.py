@@ -15,6 +15,7 @@ def get_device(cfg):
     )
     return device
 
+
 def init_accelerator(cfg):
     accelerator = Accelerator(
         mixed_precision="no",
@@ -23,10 +24,12 @@ def init_accelerator(cfg):
     print(f"object cfg.wandb: {OmegaConf.to_object(cfg.wandb)}")
     return accelerator
 
+
 def init_wandb(cfg, accelerator):
     if accelerator.is_local_main_process:
         if cfg.group is None:
-            g = cfg.model._target_.split(".")[-1]  # group of the run determined by model
+            # group of the run determined by model
+            g = cfg.model._target_.split(".")[-1]
             cfg.group = f"{g}"
         if cfg.name is None:
             t = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -43,4 +46,4 @@ def init_wandb(cfg, accelerator):
             entity=cfg.wandb.entity,
             config=OmegaConf.to_container(cfg, resolve=True),
             reinit=True,
-            )
+        )

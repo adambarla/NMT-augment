@@ -1,7 +1,6 @@
 import sys
 import hydra
 import wandb
-from accelerate import Accelerator
 from omegaconf import OmegaConf
 from utils import (
     init_wandb,
@@ -68,7 +67,7 @@ def train(
             f"validation loss hasn't improved for {epochs_since_improvement} epochs."
         )
     test_loss, test_bleu = epoch_evaluate(
-        model, test_loader, criterion, device, accelerator, tokenizer_l1, tokenizer_l2
+        model, test_loader, criterion, accelerator, tokenizer_l1, tokenizer_l2
     )
     print(f" Test Loss: {test_loss:.3f} | Test BLEU: {test_bleu:.2f}")
     wandb.log({"test_loss": test_loss, "test_bleu": test_bleu})
