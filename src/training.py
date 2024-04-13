@@ -46,13 +46,14 @@ def train(
             tokenizer_l1,
             tokenizer_l2,
         )
-        wandb.log(
-            {
-                "train_loss": train_loss,
-                "valid_loss": valid_loss,
-                "valid_bleu": valid_bleu,
-            }
-        )
+        if accelerator.is_main_process:
+            wandb.log(
+                {
+                    "train_loss": train_loss,
+                    "valid_loss": valid_loss,
+                    "valid_bleu": valid_bleu,
+                }
+            )
         if valid_loss < min_loss:
             min_loss = valid_loss
             epochs_since_improvement = 0
@@ -70,7 +71,8 @@ def train(
         model, test_loader, criterion, accelerator, tokenizer_l1, tokenizer_l2
     )
     print(f" Test Loss: {test_loss:.3f} | Test BLEU: {test_bleu:.2f}")
-    wandb.log({"test_loss": test_loss, "test_bleu": test_bleu})
+    if accelerator.is_main_process:
+        wandb.log({"test_loss": test_loss, "test_bleu": test_bleu})
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="main")

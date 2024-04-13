@@ -26,7 +26,7 @@ def init_accelerator(cfg):
 
 
 def init_wandb(cfg, accelerator):
-    if accelerator.is_local_main_process:
+    if accelerator.is_main_process:
         if cfg.group is None:
             # group of the run determined by model
             g = cfg.model._target_.split(".")[-1]
