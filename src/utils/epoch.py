@@ -18,8 +18,7 @@ def epoch_train(model, loader, optimizer, criterion, accelerator):
             )
             accelerator.backward(loss)
             optimizer.step()
-            epoch_loss += torch.mean(accelerator.gather(loss))
-            #epoch_loss += accelerator.reduce(loss, reduction='sum').item()
+            epoch_loss += accelerator.gather(loss)
             pbar.set_description(f"Train Loss: {(epoch_loss / (i + 1.0)):.3f}")
             pbar.update(1)
     return epoch_loss / len(loader)
@@ -49,7 +48,7 @@ def epoch_evaluate(
                 loss = criterion(
                     outputs.reshape(-1, outputs.shape[-1]), targets[1:].reshape(-1)
                 )
-                epoch_loss += accelerator.gather(loss.item())
+                epoch_loss += accelerator.gather(loss)
                 translations = model.translate(
                     inputs, buffer=0.5, context_size=inputs.shape[0]
                 )

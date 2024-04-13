@@ -10,6 +10,7 @@ from utils import (
     get_dataset,
     epoch_train,
     epoch_evaluate,
+    init_accelerator,
 )
 
 
@@ -77,13 +78,9 @@ def train(
 def main(cfg):
     print(f"Hydra configuration:\n{OmegaConf.to_yaml(cfg)}")
     set_deterministic(cfg.seed)
-    init_wandb(cfg)  # TODO
-    accelerator = Accelerator(
-        mixed_precision="no",
-        gradient_accumulation_steps=1,
-        log_with="wandb",
-        # logging_dir="logs" # unexpected argument?
-    )
+    accelerator = init_accelerator(cfg)
+    init_wandb(cfg, accelerator)
+    print(f"Accelerator: {accelerator}")
     device = accelerator.device
     print(f"Device: {device}")
     dataset = get_dataset(cfg)
@@ -116,7 +113,8 @@ def main(cfg):
     print(f"Optimizer:\n{optimizer}")
     criterion = hydra.utils.instantiate(cfg.criterion)
     train_loader, val_loader, test_loader, model, optimizer = accelerator.prepare(
-        train_loader, val_loader, test_loader, model, optimizer)
+        train_loader, val_loader, test_loader, model, optimizer
+    )
     train(
         model,
         optimizer,
@@ -130,6 +128,7 @@ def main(cfg):
         tokenizer_l2,
         patience=cfg.patience,
     )
+
 
 if __name__ == "__main__":
     main()
