@@ -93,8 +93,12 @@ def main(cfg):
     tokenizer_l2 = hydra.utils.instantiate(
         cfg.tokenizer, dataset=dataset, lang=cfg.data.l2
     )
+    augmenter = None
+    if cfg.augmenter is not None:
+        augmenter = hydra.utils.instantiate(cfg.augmenter)
+    print(f"Augmentation:\n{augmenter or 'No augmentations used.'}")
     train_loader, val_loader, test_loader = get_dataloaders(
-        cfg, tokenizer_l1, tokenizer_l2, dataset
+        cfg, tokenizer_l1, tokenizer_l2, augmenter, dataset
     )
     assert tokenizer_l1.pad_token_id == tokenizer_l2.pad_token_id
     assert tokenizer_l1.bos_token_id == tokenizer_l2.bos_token_id
@@ -111,7 +115,7 @@ def main(cfg):
     total_params = sum(p.numel() for p in model.parameters())
     print(f"Number of parameters: {total_params}")
     optimizer = hydra.utils.instantiate(cfg.optimizer, model.parameters())
-    print(f"Optimizer:\n{optimizer}")
+    print(f"Optimizer:\n{optimizer}\n")
     criterion = hydra.utils.instantiate(cfg.criterion)
     train_loader, val_loader, test_loader, model, optimizer = accelerator.prepare(
         train_loader, val_loader, test_loader, model, optimizer

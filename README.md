@@ -51,3 +51,12 @@ which will start the tuning. This way the tuning can be done on multiple machine
 
 WMT 2014 English-to-German. WMT 2014 is a collection of datasets used in shared tasks of the Ninth Workshop on Statistical Machine Translation. WMT 2014 English-to-German is one of the most common datasets from WMT
 2014 for machine translation
+
+## Augmentation methods
+
+We implement four text augmentation methods to expand our dataset in a low-resource setting. These methods are aimed at increasing the diversity of the data and improving model generalization. To configure which augmentation method to use, you can specify the augmenter by its corresponding name `synonym`, `method2`, `method3`, `method4` or `no_aug`, if no augmentation is needed. 
+
+1. **Synonym Replacement Augmentation**: This involves replacing words in the text with their synonyms while preserving the original meaning. This technique is inspired by the work on [Character-level Convolutional Networks for Text](https://arxiv.org/pdf/1509.01626.pdf).
+2. (Method 2 - to be edited later)
+3. (Method 3 - to be edited later)
+4. (Method 4 - to be edited later)
