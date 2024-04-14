@@ -5,11 +5,13 @@ from omegaconf import OmegaConf
 from utils import (
     init_wandb,
     set_deterministic,
-    get_dataloaders,
+    get_loaders,
     get_dataset,
     epoch_train,
     epoch_evaluate,
     init_accelerator,
+    init_model,
+    init_tokenizers,
 )
 
 
@@ -80,41 +82,18 @@ def main(cfg):
     print(f"Hydra configuration:\n{OmegaConf.to_yaml(cfg)}")
     set_deterministic(cfg.seed)
     accelerator = init_accelerator(cfg)
-    init_wandb(cfg, accelerator)
-    print(f"Accelerator: {accelerator}")
     device = accelerator.device
     print(f"Device: {device}")
+    init_wandb(cfg, accelerator)
     dataset = get_dataset(cfg)
-    print(f"Tokenizer {cfg.data.l1}:")
-    tokenizer_l1 = hydra.utils.instantiate(
-        cfg.tokenizer, dataset=dataset, lang=cfg.data.l1
-    )
-    print(f"Tokenizer {cfg.data.l2}:")
-    tokenizer_l2 = hydra.utils.instantiate(
-        cfg.tokenizer, dataset=dataset, lang=cfg.data.l2
-    )
-    train_loader, val_loader, test_loader = get_dataloaders(
-        cfg, tokenizer_l1, tokenizer_l2, dataset
-    )
-    assert tokenizer_l1.pad_token_id == tokenizer_l2.pad_token_id
-    assert tokenizer_l1.bos_token_id == tokenizer_l2.bos_token_id
-    assert tokenizer_l1.eos_token_id == tokenizer_l2.eos_token_id
-    model = hydra.utils.instantiate(
-        cfg.model,
-        device=device,
-        pad_token_id=tokenizer_l1.pad_token_id,
-        bos_token_id=tokenizer_l1.bos_token_id,
-        eos_token_id=tokenizer_l1.eos_token_id,
-    )
-    model.to(accelerator.device)
-    print(f"Model:\n{model}")
-    total_params = sum(p.numel() for p in model.parameters())
-    print(f"Number of parameters: {total_params}")
+    tok_l1, tok_l2 = init_tokenizers(cfg, dataset)
+    load_tr, load_va, load_te = get_loaders(cfg, tok_l1, tok_l2, dataset)
+    model = init_model(cfg, tok_l1, tok_l2, device)
     optimizer = hydra.utils.instantiate(cfg.optimizer, model.parameters())
     print(f"Optimizer:\n{optimizer}")
     criterion = hydra.utils.instantiate(cfg.criterion)
-    train_loader, val_loader, test_loader, model, optimizer = accelerator.prepare(
-        train_loader, val_loader, test_loader, model, optimizer
+    load_tr, load_va, load_te, model, optimizer, scheduler = accelerator.prepare(
+        load_tr, load_va, load_te, model, optimizer, scheduler
     )
     train(
         model,
@@ -122,11 +101,11 @@ def main(cfg):
         criterion,
         accelerator,
         cfg.epochs,
-        train_loader,
-        val_loader,
-        test_loader,
-        tokenizer_l1,
-        tokenizer_l2,
+        load_tr,
+        load_va,
+        load_te,
+        tok_l1,
+        tok_l2,
         patience=cfg.patience,
     )
 

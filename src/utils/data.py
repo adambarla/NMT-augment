@@ -21,7 +21,7 @@ def get_subset(cfg, dataset):
     return dataset.select(permutation)
 
 
-def get_dataloaders(cfg, tokenizer_l1, tokenizer_l2, dataset):
+def get_loaders(cfg, tokenizer_l1, tokenizer_l2, dataset):
     col_fn_args = partial(
         collate_fn,
         tokenizer_l1=tokenizer_l1,
