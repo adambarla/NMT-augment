@@ -18,6 +18,7 @@ from utils import (
 def train(
     model,
     optimizer,
+    scheduler,
     criterion,
     accelerator,
     n_epochs,
@@ -37,6 +38,7 @@ def train(
             model,
             train_loader,
             optimizer,
+            scheduler,
             criterion,
             accelerator,
         )
@@ -91,6 +93,7 @@ def main(cfg):
     model = init_model(cfg, tok_l1, tok_l2, device)
     optimizer = hydra.utils.instantiate(cfg.optimizer, model.parameters())
     print(f"Optimizer:\n{optimizer}")
+    scheduler = hydra.utils.instantiate(cfg.scheduler, optimizer=optimizer)
     criterion = hydra.utils.instantiate(cfg.criterion)
     load_tr, load_va, load_te, model, optimizer, scheduler = accelerator.prepare(
         load_tr, load_va, load_te, model, optimizer, scheduler
@@ -98,6 +101,7 @@ def main(cfg):
     train(
         model,
         optimizer,
+        scheduler,
         criterion,
         accelerator,
         cfg.epochs,

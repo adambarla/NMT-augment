@@ -3,7 +3,7 @@ from sacrebleu import corpus_bleu
 from tqdm import tqdm
 
 
-def epoch_train(model, loader, optimizer, criterion, accelerator):
+def epoch_train(model, loader, optimizer, scheduler, criterion, accelerator):
     epoch_loss = 0.0
     model.train()
     with tqdm(total=len(loader), desc="Training Progress") as pbar:
@@ -18,6 +18,7 @@ def epoch_train(model, loader, optimizer, criterion, accelerator):
             )
             accelerator.backward(loss)
             optimizer.step()
+            scheduler.step()
             epoch_loss += accelerator.gather(loss).mean().item()
             pbar.set_description(f"Train Loss: {(epoch_loss / (i + 1.0)):.3f}")
             pbar.update(1)
