@@ -49,6 +49,7 @@ def init_wandb(cfg, accelerator):
             reinit=True,
         )
 
+
 def init_augmenter(cfg):
     if cfg.augmenter is None:
         print("No augmentations used.")
@@ -57,16 +58,13 @@ def init_augmenter(cfg):
     print(f"Augmentation: {augmenter}")
     return augmenter
 
+
 def init_tokenizers(cfg, dataset):
     print(f"Tokenizer {cfg.data.l1}:")
-    tok_l1 = hydra.utils.instantiate(
-        cfg.tokenizer, dataset=dataset, lang=cfg.data.l1
-    )
+    tok_l1 = hydra.utils.instantiate(cfg.tokenizer, dataset=dataset, lang=cfg.data.l1)
     print(f"Tokenizer {cfg.data.l2}:")
-    tok_l2 = hydra.utils.instantiate(
-        cfg.tokenizer, dataset=dataset, lang=cfg.data.l2
-    )
-    example = dataset['train']['translation'][0]
+    tok_l2 = hydra.utils.instantiate(cfg.tokenizer, dataset=dataset, lang=cfg.data.l2)
+    example = dataset["train"]["translation"][0]
     example = example[cfg.data.l1] + "\n" + example[cfg.data.l2]
     print(f"{tok_l1.lang} tok:\n{colorize_tokens(tok_l1.encode(example), tok_l1)}")
     print(f"{tok_l2.lang} tok:\n{colorize_tokens(tok_l2.encode(example), tok_l2)}")
