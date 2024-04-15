@@ -12,6 +12,7 @@ from utils import (
     init_accelerator,
     init_model,
     init_tokenizers,
+    init_augmenter,
 )
 
 
@@ -51,6 +52,11 @@ def train(
             tokenizer_l2,
         )
         if accelerator.is_main_process:
+            print(
+                f"Train Loss: {train_loss:.3f} | "
+                f"Valid Loss: {valid_loss:.3f} | "
+                f"Valid BLEU: {valid_bleu:.2f}"
+            )
             wandb.log(
                 {
                     "train_loss": train_loss,
@@ -58,6 +64,7 @@ def train(
                     "valid_bleu": valid_bleu,
                 }
             )
+        print("-" * (len(str(n_epochs)) * 2 + 8))
         if valid_loss < min_loss:
             min_loss = valid_loss
             epochs_since_improvement = 0
@@ -65,17 +72,22 @@ def train(
             epochs_since_improvement += 1
         if epochs_since_improvement >= patience:
             break
-        print("-" * (len(str(n_epochs)) * 2 + 8))
     if epochs_since_improvement >= patience:
         print(
             f"Early stopping triggered in epoch {epoch + 1}, "
             f"validation loss hasn't improved for {epochs_since_improvement} epochs."
         )
     test_loss, test_bleu = epoch_evaluate(
-        model, test_loader, criterion, accelerator, tokenizer_l1, tokenizer_l2
+        model,
+        test_loader,
+        criterion,
+        accelerator,
+        tokenizer_l1,
+        tokenizer_l2,
+        name="Test",
     )
-    print(f" Test Loss: {test_loss:.3f} | Test BLEU: {test_bleu:.2f}")
     if accelerator.is_main_process:
+        print(f" Test Loss: {test_loss:.3f} | Test BLEU: {test_bleu:.2f}")
         wandb.log({"test_loss": test_loss, "test_bleu": test_bleu})
 
 
@@ -88,12 +100,14 @@ def main(cfg):
     print(f"Device: {device}")
     init_wandb(cfg, accelerator)
     dataset = get_dataset(cfg)
+    augmenter = init_augmenter(cfg)
     tok_l1, tok_l2 = init_tokenizers(cfg, dataset)
-    load_tr, load_va, load_te = get_loaders(cfg, tok_l1, tok_l2, dataset)
+    load_tr, load_va, load_te = get_loaders(cfg, tok_l1, tok_l2, augmenter, dataset)
     model = init_model(cfg, tok_l1, tok_l2, device)
     optimizer = hydra.utils.instantiate(cfg.optimizer, model.parameters())
-    print(f"Optimizer:\n{optimizer}")
+    print(f"Optimizer: {optimizer}")
     scheduler = hydra.utils.instantiate(cfg.scheduler, optimizer=optimizer)
+    print(f"Scheduler: {scheduler}")
     criterion = hydra.utils.instantiate(cfg.criterion)
     load_tr, load_va, load_te, model, optimizer, scheduler = accelerator.prepare(
         load_tr, load_va, load_te, model, optimizer, scheduler

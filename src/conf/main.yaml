@@ -1,6 +1,7 @@
 defaults:
     - _self_
-    - tokenizer: bpe
+    - augmenter: null # if null no augmentation is used, available: 'synonym'
+    - tokenizer: bpe # available tokenizers: 'bpe', 'character', 'word'
     - model: seq2seq
     - optimizer: adamw
     - scheduler: aiayn
@@ -14,6 +15,8 @@ data:
 wandb:
     entity: crutch
     project: "Data Augmentation for Neural Machine Translation"
+
+augmenter: null # only here so null can be default (see defaults)
 
 # attention is all you need defaults
 emb_size: 512

@@ -49,6 +49,13 @@ def init_wandb(cfg, accelerator):
             reinit=True,
         )
 
+def init_augmenter(cfg):
+    if cfg.augmenter is None:
+        print("No augmentations used.")
+        return None
+    augmenter = hydra.utils.instantiate(cfg.augmenter)
+    print(f"Augmentation: {augmenter}")
+    return augmenter
 
 def init_tokenizers(cfg, dataset):
     print(f"Tokenizer {cfg.data.l1}:")
@@ -74,7 +81,7 @@ def init_model(cfg, tokenizer_l1, tokenizer_l2, device):
         eos_token_id=tokenizer_l1.eos_token_id,
     )
     model.to(device)
-    print(f"Model:\n{model}")
+    print(f"Model: {model}")
     total_params = sum(p.numel() for p in model.parameters())
     print(f"Number of parameters: {total_params}")
     return model

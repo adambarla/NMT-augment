@@ -33,6 +33,7 @@ def epoch_evaluate(
     tokenizer_l1,
     tokenizer_l2,
     n_examples=3,
+    name="Valid",
 ):
     epoch_loss = 0.0
     model.eval()
@@ -40,7 +41,7 @@ def epoch_evaluate(
     references = []
     inputs = None
     with torch.no_grad():
-        with tqdm(total=len(loader), desc="Valid") as pbar:
+        with tqdm(total=len(loader), desc=f"{name}") as pbar:
             for i, batch in enumerate(loader):
                 inputs, targets = batch
                 inputs = inputs.transpose(0, 1).to(accelerator.device)  # L x B
@@ -60,9 +61,9 @@ def epoch_evaluate(
                     )
                 decoded_translations = tokenizer_l2.decode(translations.transpose(0, 1))
                 decoded_targets = tokenizer_l2.decode(targets.transpose(0, 1))
-                hypotheses += decoded_translations
-                references += decoded_targets
-                pbar.set_description(f"Valid Loss: {epoch_loss / (i + 1.0):.3f}")
+                hypotheses.extend(decoded_translations)
+                references.extend(decoded_targets)
+                pbar.set_description(f"{name:>5s} Loss: {epoch_loss / (i + 1.0):.3f}")
                 pbar.update(1)
         for i in range(n_examples):
             print(
@@ -70,9 +71,10 @@ def epoch_evaluate(
                 f"target: {decoded_targets[i]}\n"
                 f"output: {decoded_translations[i]}",
             )
-    all_translations, all_targets = accelerator.gather_for_metrics(
-        (hypotheses, references)
-    )
-    bleu_score = corpus_bleu(all_translations, all_targets).score
-    print(f"-\nBLEU score: {bleu_score:.2f}")
-    return epoch_loss / len(loader), bleu_score
+        print("-")
+    bleu = 0.0
+    if accelerator.is_main_process: # gather all hypotheses and references
+        hypotheses = accelerator.gather(hypotheses)
+        references = accelerator.gather(references)
+        bleu = corpus_bleu(hypotheses, [references]).score
+    return epoch_loss / len(loader), bleu
