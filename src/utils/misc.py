@@ -59,14 +59,18 @@ def init_augmenter(cfg):
 
 def init_tokenizers(cfg, dataset):
     print(f"Tokenizer {cfg.data.l1}:")
-    tokenizer_l1 = hydra.utils.instantiate(
+    tok_l1 = hydra.utils.instantiate(
         cfg.tokenizer, dataset=dataset, lang=cfg.data.l1
     )
     print(f"Tokenizer {cfg.data.l2}:")
-    tokenizer_l2 = hydra.utils.instantiate(
+    tok_l2 = hydra.utils.instantiate(
         cfg.tokenizer, dataset=dataset, lang=cfg.data.l2
     )
-    return tokenizer_l1, tokenizer_l2
+    example = dataset['train']['translation'][0]
+    example = example[cfg.data.l1] + "\n" + example[cfg.data.l2]
+    print(f"{tok_l1.lang} tok:\n{colorize_tokens(tok_l1.encode(example), tok_l1)}")
+    print(f"{tok_l2.lang} tok:\n{colorize_tokens(tok_l2.encode(example), tok_l2)}")
+    return tok_l1, tok_l2
 
 
 def init_model(cfg, tokenizer_l1, tokenizer_l2, device):
@@ -106,8 +110,9 @@ def colorize_tokens(token_list, tokenzier):
         (212, 220, 220),
     ]
     string_list = tokenzier.decode([[t] for t in token_list])
+    string_list = [s for s in string_list if s]
     s = ""
     for index, string in enumerate(string_list):
         r, g, b = color_palette[index % len(color_palette)]
-        s += f"\x1b[48;2;{r};{g};{b}m{string}\x1b[0m"
-    return s
+        s += f"\x1b[48;2;{r};{g};{b}m{string}"
+    return s + "\x1b[0m"
