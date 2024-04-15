@@ -13,23 +13,31 @@ pip install -r requirements.txt
 
 ## Training
 
+We use [Accelerate](https://huggingface.co/docs/accelerate/en/index) to leverage hardware accelerators for mixed precision training, gradient accumulation. For logging we use [Weights & Biases](https://wandb.ai/site).
+
 ```bash
 cd src
-python -m training
+```
+Create `accelerate` config:
+```bash
+accelerate config
+```
+Run training:
+```bash
+accelerate launch -m training
 ```
 
 For changing hyperparameters we used [hydra](https://hydra.cc/docs/intro/). For example, to change the languages the model trains on, you can run:
 
 ```bash
-python -m training.py l1=de l2=en
+accelerate launch training.py data.l1=de data.l2=en
 ```
 Same goes for all other parameter defined in `src/conf/`.
 
-We use [Accelerate](https://huggingface.co/docs/accelerate/en/index) to leverage hardware accelerators for mixed precision training, gradient accumulation, and logging with [Weights & Biases](https://wandb.ai/site) (wandb). The Accelerator object is instantiated with the desired settings, e.g., `accelerator = Accelerator(mixed_precision='fp16', log_with='wandb')`.
 
 ## Hyperparameter Tuning
 
-We use wandb sweep. Run
+We use [wandb sweep](https://docs.wandb.ai/guides/integrations/hydra). Run
 ```bash
 wandb sweep conf/sweep/<sweep_name>.yaml
 ```
