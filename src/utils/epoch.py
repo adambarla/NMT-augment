@@ -74,7 +74,7 @@ def epoch_evaluate(
         print("-")
     bleu = 0.0
     if accelerator.is_main_process: # gather all hypotheses and references
-        hypotheses = accelerator.gather(hypotheses)
-        references = accelerator.gather(references)
-        bleu = corpus_bleu(hypotheses, [references]).score
+        hypotheses = accelerator.gather_for_metrics(hypotheses)
+        references = accelerator.gather_for_metrics(references)
+        bleu = corpus_bleu(hypotheses, references).score
     return epoch_loss / len(loader), bleu
