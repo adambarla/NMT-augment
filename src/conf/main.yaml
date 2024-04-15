@@ -4,6 +4,7 @@ defaults:
     - tokenizer: bpe # available tokenizers: 'bpe', 'character', 'word'
     - model: seq2seq
     - optimizer: adamw
+    - scheduler: aiayn
     - criterion: crossentropy
 data:
     name: wmt14
@@ -25,15 +26,17 @@ n_layer: 6
 vocab_size: 32000
 
 batch_size: 32
-max_length: 256 # 143.16(mean), 127(50th%), 253(90th%), 414.0(99th%)
-lr: 0.001
+# length in 1. characters: 143.16(mean), 127(50th%), 253(90th%),   414(99th%)
+#           2. tokens, :   29.833(mean),  84(99th%), 146(99.9th%), 392(99.99th%); language czech, vocab size 32000
+max_length: 64
+lr: 0.3 # see scheduler/aiayn.yaml for the formula
 epochs: 100
 dropout: 0.1 # 0.1 is the default from the https://pytorch.org/tutorials/beginner/colab tutorial
 
 subset_size: null # number of training examples selected (persistent depending on seed), if null whole dataset is used
 
 name: null # if null, it will be assigned automatically as time
-group: null # todo: change automatic selection of run group
+group: null # if null, it will be assigned automatically as time
 
 seed: 42
 device: null # if null auto cofiguration happens in this order based on availability: gpu, mps, cpu

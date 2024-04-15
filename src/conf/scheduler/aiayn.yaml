@@ -1,0 +1,6 @@
+_target_: scheduler.aiayn.AIAYNScheduler
+warmup_steps: 4000
+d_model: ${emb_size}
+last_epoch: -1
+
+# lr = d_model^(-0.5) * min(step_num^(-0.5), step_num * warmup_steps^(-1.5))
