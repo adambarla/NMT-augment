@@ -69,7 +69,8 @@ def epoch_evaluate(
                 f"target: {decoded_targets[i]}\n"
                 f"output: {decoded_translations[i]}",
             )
-    all_translations, all_targets = accelerator.gather_for_metrics((hypotheses, references))
+    all_translations = accelerator.gather_for_metrics(hypotheses)
+    all_targets = accelerator.gather_for_metrics(references)
     bleu_score = corpus_bleu(all_translations, all_targets).score
     print(f"-\nBLEU score: {bleu_score:.2f}")
     return epoch_loss / len(loader), bleu_score
