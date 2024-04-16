@@ -40,7 +40,6 @@ name: null # if null, it will be assigned automatically as time
 group: null # if null, it will be assigned automatically as time
 
 seed: 42
-device: null # if null auto cofiguration happens in this order based on availability: gpu, mps, cpu
 pin_memory: true # turn on on gpu
 prefetch_factor: 2 # how many subprocesses to use for data loading. 0 means that the data will be loaded in the main process.
 num_workers: 8 # number of batches loaded in advance by each worker.
