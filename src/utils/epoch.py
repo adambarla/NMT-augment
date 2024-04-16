@@ -20,6 +20,7 @@ def epoch_train(model, loader, optimizer, scheduler, criterion, accelerator, ste
             accelerator.backward(loss)
             optimizer.step()
             scheduler.step()
+            wandb.log({"lr": scheduler.get_last_lr()[0]}, step=step)
             epoch_loss += accelerator.gather(loss).mean().item()
             pbar.set_description(f"train loss: {(epoch_loss / (i + 1.0)):.3f}")
             pbar.update(1)
