@@ -4,7 +4,7 @@ from tqdm import tqdm
 from utils.metrics import calculate_metrics, log_metrics
 
 
-def epoch_train(model, loader, optimizer, scheduler, criterion, accelerator, step):
+def epoch_train(model, loader, optimizer, scheduler, criterion, accelerator):
     epoch_loss = 0.0
     model.train()
     with tqdm(total=len(loader), desc="train") as pbar:
@@ -21,14 +21,13 @@ def epoch_train(model, loader, optimizer, scheduler, criterion, accelerator, ste
             optimizer.step()
             scheduler.step()
             if accelerator.is_main_process:
-                wandb.log({"lr": scheduler.get_last_lr()[0]}, step=step)
+                wandb.log({"lr": scheduler.get_last_lr()[0]}, step=scheduler.state_dict()['_step_count'])
             epoch_loss += accelerator.gather(loss).mean().item()
             pbar.set_description(f"train loss: {(epoch_loss / (i + 1.0)):.3f}")
             pbar.update(1)
-            step += 1
     if accelerator.is_main_process:
         results = {"loss": epoch_loss / len(loader)}
-        log_metrics(results, "train", step)
+        log_metrics(results, "train", step=scheduler.state_dict()['_step_count'])
 
 
 def epoch_evaluate(

@@ -12,7 +12,6 @@ from utils import (
     init_model,
     init_tokenizers,
     init_augmenter,
-    log_metrics,
     init_metrics,
 )
 
@@ -44,9 +43,8 @@ def train(
             scheduler,
             criterion,
             accelerator,
-            step,
         )
-        step += len(train_loader)
+        step = scheduler.state_dict()['_step_count']
         val_res = epoch_evaluate(
             model,
             val_loader,
@@ -81,8 +79,8 @@ def main(cfg):
     set_deterministic(cfg.seed)
     accelerator = init_accelerator(cfg)
     device = accelerator.device
-    print(f"Device: {device}")
     init_wandb(cfg, accelerator)
+    print(f"Device: {device}")
     dataset = get_dataset(cfg)
     augmenter = init_augmenter(cfg)
     tok_l1, tok_l2 = init_tokenizers(cfg, dataset)
