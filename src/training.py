@@ -32,11 +32,11 @@ def train(
     metrics,
     early_stopping,
 ):
-    epoch = 0
     step = 0
     for epoch in range(n_epochs):
         print(f"Epoch: {epoch + 1:>{len(str(n_epochs))}d}/{n_epochs}")
-        wandb.log({"epoch": epoch + 1}, step=step)
+        if accelerator.is_main_process:
+            wandb.log({"epoch": epoch + 1}, step=step)
         epoch_train(
             model,
             train_loader,
