@@ -1,0 +1,4 @@
+_target_: utils.patience.Patience
+patience: 5 # number of epochs to wait for improvement before stopping the run
+mode: min # 'min' or 'max' depending on the metric (see below)
+metric: loss # metric to be used for early stopping, 'loss' or it must be in evaluation_metrics (see main.yaml)

@@ -6,6 +6,7 @@ defaults:
     - optimizer: adamw
     - scheduler: aiayn
     - criterion: crossentropy
+    - early_stopping: patience
 data:
     name: wmt14
     l1: cs # available combinations 'cs-en', 'de-en', 'fr-en', 'hi-en', 'ru-en'
