@@ -37,6 +37,24 @@ def init_wandb(cfg, accelerator):
             reinit=True,
         )
 
+def init_accelerate_tracker(cfg, accelerator):
+    if cfg.group is None:
+        # group of the run determined by model
+        g = cfg.model._target_.split(".")[-1]
+        cfg.group = f"{g}"
+    if cfg.name is None:
+        t = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # add other parameters of name if needed
+        tok = cfg.tokenizer._target_.split(".")[-1]
+        l1 = cfg.data.l1
+        l2 = cfg.data.l2
+        cfg.name = f"{tok}_{l1}_{l2}_{t}"
+    
+    accelerator.init_trackers(
+            project_name=cfg.wandb.project,
+            config=cfg,
+            init_kwargs={"wandb": {"entity": cfg.wandb.entity, "group": cfg.group, "name": cfg.name}}
+    )
 
 def init_augmenter(cfg):
     if cfg.augmenter is None:

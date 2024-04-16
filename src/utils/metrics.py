@@ -1,4 +1,3 @@
-import wandb
 from evaluate import load
 
 
@@ -13,9 +12,9 @@ def calculate_metrics(results, metrics, hypotheses, references):
         results[n] = result[n] if n == "meteor" else result["score"]
 
 
-def log_metrics(results, name, step):
+def log_metrics(results, name, step, accelerator):
     for k, v in results.items():
         print(f"{name} {k}: {v:.4f}", end=" | ")
     print()
     for k, v in results.items():
-        wandb.log({f"{name}_{k}": v}, step=step)
+        accelerator.log({f"{name}_{k}": v}, step=step)

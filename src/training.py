@@ -2,7 +2,6 @@ import hydra
 import wandb
 from omegaconf import OmegaConf
 from utils import (
-    init_wandb,
     set_deterministic,
     get_loaders,
     get_dataset,
@@ -14,6 +13,7 @@ from utils import (
     init_augmenter,
     log_metrics,
     init_metrics,
+    init_accelerate_tracker
 )
 
 
@@ -35,8 +35,7 @@ def train(
     step = 0
     for epoch in range(n_epochs):
         print(f"Epoch: {epoch + 1:>{len(str(n_epochs))}d}/{n_epochs}")
-        if accelerator.is_main_process:
-            wandb.log({"epoch": epoch + 1}, step=step)
+        accelerator.log({"epoch": epoch + 1}, step=step)
         epoch_train(
             model,
             train_loader,
@@ -82,7 +81,7 @@ def main(cfg):
     accelerator = init_accelerator(cfg)
     device = accelerator.device
     print(f"Device: {device}")
-    init_wandb(cfg, accelerator)
+    init_accelerate_tracker(cfg, accelerator)
     dataset = get_dataset(cfg)
     augmenter = init_augmenter(cfg)
     tok_l1, tok_l2 = init_tokenizers(cfg, dataset)

@@ -20,15 +20,13 @@ def epoch_train(model, loader, optimizer, scheduler, criterion, accelerator, ste
             accelerator.backward(loss)
             optimizer.step()
             scheduler.step()
-            if accelerator.is_main_process:
-                wandb.log({"lr": scheduler.get_last_lr()[0]}, step=step)
+            accelerator.log({"lr": scheduler.get_last_lr()[0]}, step=step)
             epoch_loss += accelerator.gather(loss).mean().item()
             pbar.set_description(f"train loss: {(epoch_loss / (i + 1.0)):.3f}")
             pbar.update(1)
             step += 1
-    if accelerator.is_main_process:
-        results = {"loss": epoch_loss / len(loader)}
-        log_metrics(results, "train", step)
+    results = {"loss": epoch_loss / len(loader)}
+    log_metrics(results, "train", step, accelerator)
 
 
 def epoch_evaluate(
@@ -83,7 +81,6 @@ def epoch_evaluate(
     hypotheses = accelerator.gather_for_metrics(hypotheses)
     references = accelerator.gather_for_metrics(references)
     results = {"loss": epoch_loss / len(loader)}
-    if accelerator.is_main_process:
-        calculate_metrics(results, metrics, hypotheses, references)
-        log_metrics(results, name, step)
+    calculate_metrics(results, metrics, hypotheses, references)
+    log_metrics(results, name, step, accelerator)
     return results
