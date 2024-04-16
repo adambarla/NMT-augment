@@ -17,3 +17,4 @@ transformers==4.38.2
 wandb==0.16.4
 sacrebleu==2.4.1
 nltk==3.8.1
+evaluate==0.4.1

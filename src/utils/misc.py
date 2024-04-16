@@ -3,18 +3,6 @@ import wandb
 from accelerate import Accelerator
 from omegaconf import OmegaConf
 from datetime import datetime
-import torch
-
-
-def get_device(cfg):
-    if cfg.device is not None:
-        return torch.device(cfg.device)
-    device = torch.device(
-        "cuda"
-        if torch.cuda.is_available()
-        else "mps" if torch.backends.mps.is_available() else "cpu"
-    )
-    return device
 
 
 def init_accelerator(cfg):

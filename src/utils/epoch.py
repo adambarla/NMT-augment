@@ -1,12 +1,13 @@
 import torch
-from sacrebleu import corpus_bleu
+import wandb
 from tqdm import tqdm
+from utils.metrics import calculate_metrics, log_metrics
 
 
 def epoch_train(model, loader, optimizer, scheduler, criterion, accelerator):
     epoch_loss = 0.0
     model.train()
-    with tqdm(total=len(loader), desc="Training Progress") as pbar:
+    with tqdm(total=len(loader), desc="train") as pbar:
         for i, batch in enumerate(loader):
             optimizer.zero_grad()
             inputs, targets = batch
@@ -19,10 +20,14 @@ def epoch_train(model, loader, optimizer, scheduler, criterion, accelerator):
             accelerator.backward(loss)
             optimizer.step()
             scheduler.step()
+            if accelerator.is_main_process:
+                wandb.log({"lr": scheduler.get_last_lr()[0]}, step=scheduler.state_dict()['_step_count'])
             epoch_loss += accelerator.gather(loss).mean().item()
-            pbar.set_description(f"Train Loss: {(epoch_loss / (i + 1.0)):.3f}")
+            pbar.set_description(f"train loss: {(epoch_loss / (i + 1.0)):.3f}")
             pbar.update(1)
-    return epoch_loss / len(loader)
+    if accelerator.is_main_process:
+        results = {"loss": epoch_loss / len(loader)}
+        log_metrics(results, "train", step=scheduler.state_dict()['_step_count'])
 
 
 def epoch_evaluate(
@@ -32,8 +37,10 @@ def epoch_evaluate(
     accelerator,
     tokenizer_l1,
     tokenizer_l2,
+    metrics,
+    step,
     n_examples=3,
-    name="Valid",
+    name="valid",
 ):
     epoch_loss = 0.0
     model.eval()
@@ -63,7 +70,7 @@ def epoch_evaluate(
                 decoded_targets = tokenizer_l2.decode(targets.transpose(0, 1))
                 hypotheses.extend(decoded_translations)
                 references.extend(decoded_targets)
-                pbar.set_description(f"{name:>5s} Loss: {epoch_loss / (i + 1.0):.3f}")
+                pbar.set_description(f"{name:>5s} loss: {epoch_loss / (i + 1.0):.3f}")
                 pbar.update(1)
         for i in range(n_examples):
             print(
@@ -74,5 +81,8 @@ def epoch_evaluate(
         print("-")
     hypotheses = accelerator.gather_for_metrics(hypotheses)
     references = accelerator.gather_for_metrics(references)
-    bleu = corpus_bleu(hypotheses, references).score
-    return epoch_loss / len(loader), bleu
+    results = {"loss": epoch_loss / len(loader)}
+    if accelerator.is_main_process:
+        calculate_metrics(results, metrics, hypotheses, references)
+        log_metrics(results, name, step)
+    return results
