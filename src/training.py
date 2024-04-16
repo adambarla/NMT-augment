@@ -1,4 +1,3 @@
-import sys
 import hydra
 import wandb
 from omegaconf import OmegaConf
@@ -13,6 +12,8 @@ from utils import (
     init_model,
     init_tokenizers,
     init_augmenter,
+    log_metrics,
+    init_metrics,
 )
 
 
@@ -28,67 +29,50 @@ def train(
     test_loader,
     tokenizer_l1,
     tokenizer_l2,
-    patience,
+    metrics,
+    early_stopping,
 ):
-    min_loss = sys.maxsize
-    epochs_since_improvement = 0
     epoch = 0
+    step = 0
     for epoch in range(n_epochs):
         print(f"Epoch: {epoch + 1:>{len(str(n_epochs))}d}/{n_epochs}")
-        train_loss = epoch_train(
+        wandb.log({"epoch": epoch + 1}, step=step)
+        epoch_train(
             model,
             train_loader,
             optimizer,
             scheduler,
             criterion,
             accelerator,
+            step,
         )
-        valid_loss, valid_bleu = epoch_evaluate(
+        step += len(train_loader)
+        val_res = epoch_evaluate(
             model,
             val_loader,
             criterion,
             accelerator,
             tokenizer_l1,
             tokenizer_l2,
+            metrics,
+            step,
         )
-        if accelerator.is_main_process:
-            print(
-                f"Train Loss: {train_loss:.3f} | "
-                f"Valid Loss: {valid_loss:.3f} | "
-                f"Valid BLEU: {valid_bleu:.2f}"
-            )
-            wandb.log(
-                {
-                    "train_loss": train_loss,
-                    "valid_loss": valid_loss,
-                    "valid_bleu": valid_bleu,
-                }
-            )
         print("-" * (len(str(n_epochs)) * 2 + 8))
-        if valid_loss < min_loss:
-            min_loss = valid_loss
-            epochs_since_improvement = 0
-        else:
-            epochs_since_improvement += 1
-        if epochs_since_improvement >= patience:
-            break
-    if epochs_since_improvement >= patience:
-        print(
-            f"Early stopping triggered in epoch {epoch + 1}, "
-            f"validation loss hasn't improved for {epochs_since_improvement} epochs."
-        )
-    test_loss, test_bleu = epoch_evaluate(
+        if accelerator.is_main_process:
+            if early_stopping.should_stop(val_res):
+                print(f"Early stopping triggered in epoch {epoch + 1}")
+                break
+    epoch_evaluate(
         model,
         test_loader,
         criterion,
         accelerator,
         tokenizer_l1,
         tokenizer_l2,
-        name="Test",
+        metrics,
+        step,
+        name="test",
     )
-    if accelerator.is_main_process:
-        print(f" Test Loss: {test_loss:.3f} | Test BLEU: {test_bleu:.2f}")
-        wandb.log({"test_loss": test_loss, "test_bleu": test_bleu})
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="main")
@@ -112,6 +96,8 @@ def main(cfg):
     load_tr, load_va, load_te, model, optimizer, scheduler = accelerator.prepare(
         load_tr, load_va, load_te, model, optimizer, scheduler
     )
+    metrics = init_metrics(cfg)
+    early_stopping = hydra.utils.instantiate(cfg.early_stopping)
     train(
         model,
         optimizer,
@@ -124,7 +110,8 @@ def main(cfg):
         load_te,
         tok_l1,
         tok_l2,
-        patience=cfg.patience,
+        metrics,
+        early_stopping,
     )
 
 
