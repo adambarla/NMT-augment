@@ -26,8 +26,8 @@ def epoch_train(model, loader, optimizer, scheduler, criterion, accelerator, ste
             pbar.update(1)
             step += 1
     if accelerator.is_main_process:
-        results = {'loss': epoch_loss / len(loader)}
-        log_metrics(results, 'train', step)
+        results = {"loss": epoch_loss / len(loader)}
+        log_metrics(results, "train", step)
 
 
 def epoch_evaluate(
@@ -81,7 +81,7 @@ def epoch_evaluate(
         print("-")
     hypotheses = accelerator.gather_for_metrics(hypotheses)
     references = accelerator.gather_for_metrics(references)
-    results = {'loss': epoch_loss / len(loader)}
+    results = {"loss": epoch_loss / len(loader)}
     if accelerator.is_main_process:
         calculate_metrics(results, metrics, hypotheses, references)
         log_metrics(results, name, step)

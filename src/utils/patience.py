@@ -1,4 +1,3 @@
-
 class Patience:
 
     def __init__(self, patience, mode, metric):
@@ -11,8 +10,8 @@ class Patience:
     def should_stop(self, results):
         if (
             self.best is None
-            or (self.mode == 'min' and self.best is results[self.metric] < self.best)
-            or (self.mode == 'max' and self.best is results[self.metric] > self.best)
+            or (self.mode == "min" and self.best is results[self.metric] < self.best)
+            or (self.mode == "max" and self.best is results[self.metric] > self.best)
         ):
             self.best = results[self.metric]
             self.counter = 0
