@@ -44,7 +44,7 @@ def train(
             criterion,
             accelerator,
         )
-        step = scheduler.state_dict()['_step_count']
+        step = scheduler.state_dict()["_step_count"]
         val_res = epoch_evaluate(
             model,
             val_loader,
