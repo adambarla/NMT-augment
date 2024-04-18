@@ -1,4 +1,6 @@
 import hydra
+from accelerate.utils import broadcast
+
 import wandb
 from omegaconf import OmegaConf
 from utils import (
@@ -56,13 +58,13 @@ def train(
             step,
         )
         print("-" * (len(str(n_epochs)) * 2 + 8))
-        with accelerator.main_process_first():
-            if accelerator.is_main_process:
-                if early_stopping.should_stop(val_res):
-                    print(f"Early stopping triggered in epoch {epoch + 1}")
-                    accelerator.set_trigger()
-            if accelerator.check_trigger():
-                break
+        stop = False
+        if accelerator.is_main_process:
+            stop = early_stopping.should_stop(val_res)
+        stop = broadcast(stop)
+        if stop:
+            print(f"Early stopping triggered in epoch {epoch + 1}")
+            break
     epoch_evaluate(
         model,
         test_loader,
