@@ -18,3 +18,4 @@ wandb==0.16.4
 sacrebleu==2.4.1
 nltk==3.8.1
 evaluate==0.4.1
+rouge-score==0.1.2

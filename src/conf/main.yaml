@@ -26,11 +26,11 @@ n_head: 8
 n_layer: 6
 vocab_size: 32000
 
-batch_size: 64
+batch_size: 128
 # length in 1. characters: 143.16(mean), 127(50th%), 253(90th%),   414(99th%)
 #           2. tokens, :   29.833(mean),  84(99th%), 146(99.9th%), 392(99.99th%); language czech, vocab size 32000
 max_length: 64
-lr: 0.3 # see scheduler/aiayn.yaml for the formula
+lr: 1 # see scheduler/aiayn.yaml for the formula
 epochs: 1000
 dropout: 0.1 # 0.1 is the default from the https://pytorch.org/tutorials/beginner/colab tutorial
 
@@ -45,4 +45,4 @@ prefetch_factor: 2 # how many subprocesses to use for data loading. 0 means that
 num_workers: 8 # number of batches loaded in advance by each worker.
 persistent_workers: true # if true, the data loader will not shut down the worker processes after a dataset has been consumed once
 
-metrics: [sacrebleu, meteor, ter, chrf] # available metrics: meteor, ter, chrf, sacrebleu, ...
+metrics: [sacrebleu, meteor, ter, chrf, rouge] # available metrics: meteor, ter, chrf, sacrebleu, ...

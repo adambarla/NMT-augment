@@ -10,7 +10,13 @@ def calculate_metrics(results, metrics, hypotheses, references):
     list_of_references = [[r] for r in references]
     for n, m in metrics.items():
         result = m.compute(predictions=hypotheses, references=list_of_references)
-        results[n] = result[n] if n == "meteor" else result["score"]
+        if n == "meteor":
+            results[n] = result["meteor"]
+            continue
+        if n == "rouge":
+            results.update(result)
+            continue
+        results[n] = result["score"]
 
 
 def log_metrics(results, name, step):

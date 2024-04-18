@@ -1,4 +1,7 @@
 import hydra
+import torch
+from accelerate.utils import broadcast
+
 import wandb
 from omegaconf import OmegaConf
 from utils import (
@@ -44,7 +47,7 @@ def train(
             criterion,
             accelerator,
         )
-        step = scheduler.state_dict()['_step_count']
+        step = scheduler.state_dict()["_step_count"]
         val_res = epoch_evaluate(
             model,
             val_loader,
@@ -56,10 +59,13 @@ def train(
             step,
         )
         print("-" * (len(str(n_epochs)) * 2 + 8))
+        stop = False
         if accelerator.is_main_process:
-            if early_stopping.should_stop(val_res):
-                print(f"Early stopping triggered in epoch {epoch + 1}")
-                break
+            stop = early_stopping.should_stop(val_res)
+        stop = broadcast(torch.tensor(stop, dtype=torch.bool, device=accelerator.device))
+        if stop.item():
+            print(f"Early stopping triggered in epoch {epoch + 1}")
+            break
     epoch_evaluate(
         model,
         test_loader,
