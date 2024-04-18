@@ -56,9 +56,12 @@ def train(
             step,
         )
         print("-" * (len(str(n_epochs)) * 2 + 8))
-        if accelerator.is_main_process:
-            if early_stopping.should_stop(val_res):
-                print(f"Early stopping triggered in epoch {epoch + 1}")
+        with accelerator.main_process_first():
+            if accelerator.is_main_process:
+                if early_stopping.should_stop(val_res):
+                    print(f"Early stopping triggered in epoch {epoch + 1}")
+                    accelerator.set_trigger()
+            if accelerator.check_trigger():
                 break
     epoch_evaluate(
         model,
