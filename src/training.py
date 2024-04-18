@@ -62,7 +62,7 @@ def train(
         stop = False
         if accelerator.is_main_process:
             stop = early_stopping.should_stop(val_res)
-        stop = broadcast(torch.tensor(stop, dtype=torch.bool))
+        stop = broadcast(torch.tensor(stop, dtype=torch.bool, device=accelerator.device))
         if stop.item():
             print(f"Early stopping triggered in epoch {epoch + 1}")
             break
