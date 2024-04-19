@@ -82,7 +82,39 @@ class WordNet(WordDictionary):
             )
 
         supported_langs = [
-            "als", "arb", "bul", "cat", "cmn", "dan", "ell", "eng", "eus", "fin", "fra", "glg", "heb", "hrv", "ind", "isl", "ita", "ita_iwn", "jpn", "lit", "nld", "nno", "nob", "pol", "por", "ron", "slk", "slv", "spa", "swe", "tha", "zsm",]
+            "als",
+            "arb",
+            "bul",
+            "cat",
+            "cmn",
+            "dan",
+            "ell",
+            "eng",
+            "eus",
+            "fin",
+            "fra",
+            "glg",
+            "heb",
+            "hrv",
+            "ind",
+            "isl",
+            "ita",
+            "ita_iwn",
+            "jpn",
+            "lit",
+            "nld",
+            "nno",
+            "nob",
+            "pol",
+            "por",
+            "ron",
+            "slk",
+            "slv",
+            "spa",
+            "swe",
+            "tha",
+            "zsm",
+        ]
 
         if lang not in supported_langs:
             raise ValueError(
@@ -180,15 +212,27 @@ class AntonymAug(WordAugmenter):
         results = []
         for token_idx in token_idxes:
 
-            if tokens[token_idx][1] not in ['VB', 'VBD', 'VBZ', 'VBG', 'VBN', 'VBP', 'JJ', 'JJR', 'JJS', 'RB', 'RBR', 'RBS']:
+            if tokens[token_idx][1] not in [
+                "VB",
+                "VBD",
+                "VBZ",
+                "VBG",
+                "VBN",
+                "VBP",
+                "JJ",
+                "JJR",
+                "JJS",
+                "RB",
+                "RBR",
+                "RBS",
+            ]:
                 continue
 
             if len(self.get_candidates(tokens, token_idx)) == 0:
                 continue
-            
+
             results.append(token_idx)
         return results
-    
 
     def substitute(self, data):
         if not data or not data.strip():
@@ -202,7 +246,7 @@ class AntonymAug(WordAugmenter):
         aug_candidates = self._get_aug_idxes(pos)
         if aug_candidates is None or len(aug_candidates) == 0:
             return data
-        
+
         aug_idxes, candidates = zip(*aug_candidates)
         if aug_idxes is None or len(aug_idxes) == 0:
             return data
@@ -211,7 +255,7 @@ class AntonymAug(WordAugmenter):
             # Skip if no augment for word
             if aug_idx not in aug_idxes:
                 continue
-            
+
             candidates = self.get_candidates(pos, aug_idx)
 
             if len(candidates) > 0:
@@ -252,9 +296,13 @@ class AntonymAug(WordAugmenter):
                 candidates.extend(self.model.predict(tokens[aug_idx][0]))
             else:
                 for word_pos in word_poses:
-                    candidates.extend(self.model.predict(tokens[aug_idx][0], pos=word_pos))
+                    candidates.extend(
+                        self.model.predict(tokens[aug_idx][0], pos=word_pos)
+                    )
 
-            candidates = [c for c in candidates if c.lower() != tokens[aug_idx][0].lower()]
+            candidates = [
+                c for c in candidates if c.lower() != tokens[aug_idx][0].lower()
+            ]
 
             if len(candidates) > 0:
                 candidate = self.sample(candidates, 1)[0]
@@ -265,7 +313,7 @@ class AntonymAug(WordAugmenter):
 
         aug_idexes = self.sample(aug_idexes, aug_cnt)
         return aug_idexes
-    
+
     def get_candidates(self, tokens, token_idx):
         original_token = tokens[token_idx][0]
         word_poses = PartOfSpeech.constituent2pos(tokens[token_idx][1])
@@ -275,11 +323,13 @@ class AntonymAug(WordAugmenter):
             candidates.extend(self.model.predict(tokens[token_idx][0]))
         else:
             for word_pos in word_poses:
-                candidates.extend(self.model.predict(tokens[token_idx][0], pos=word_pos))
+                candidates.extend(
+                    self.model.predict(tokens[token_idx][0], pos=word_pos)
+                )
 
         candidates = [c for c in candidates if c.lower() != original_token.lower()]
         return candidates
-    
+
     def pre_skip_aug(self, tokens):
         results = []
         for token_idx, token in enumerate(tokens):

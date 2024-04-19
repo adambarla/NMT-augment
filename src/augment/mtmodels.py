@@ -3,24 +3,37 @@ import torch.nn.functional as F
 from torch.utils import data as t_data
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
+
 class LanguageModels:
-    def __init__(self, device='cpu', silence=True):
+    def __init__(self, device="cpu", silence=True):
         try:
             import torch
         except ModuleNotFoundError:
-            raise ModuleNotFoundError('Missed torch library. Install torch by following https://pytorch.org/get-started/locally/`')
+            raise ModuleNotFoundError(
+                "Missed torch library. Install torch by following https://pytorch.org/get-started/locally/`"
+            )
 
-        self.device = device if device else 'cpu'
+        self.device = device if device else "cpu"
         self.silence = silence
 
+
 class MtTransformers(LanguageModels):
-    def __init__(self, src_model_name='facebook/wmt19-en-de', tgt_model_name='facebook/wmt19-de-en',
-                 device='cuda', silence=True, batch_size=32, max_length=None):
+    def __init__(
+        self,
+        src_model_name="facebook/wmt19-en-de",
+        tgt_model_name="facebook/wmt19-de-en",
+        device="cuda",
+        silence=True,
+        batch_size=32,
+        max_length=None,
+    ):
         super().__init__(device, silence=silence)
         try:
             from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
         except ModuleNotFoundError:
-            raise ModuleNotFoundError('Missed transformers library. Install transfomers by `pip install transformers`')
+            raise ModuleNotFoundError(
+                "Missed transformers library. Install transfomers by `pip install transformers`"
+            )
 
         self.src_model_name = src_model_name
         self.tgt_model_name = tgt_model_name
@@ -40,21 +53,22 @@ class MtTransformers(LanguageModels):
         return str(self.src_model.device)
 
     def predict(self, texts, target_words=None, n=1):
-        src_translated_texts = self.translate_one_step_batched(texts, self.src_tokenizer, self.src_model)
-        tgt_translated_texts = self.translate_one_step_batched(src_translated_texts, self.tgt_tokenizer, self.tgt_model)
+        src_translated_texts = self.translate_one_step_batched(
+            texts, self.src_tokenizer, self.src_model
+        )
+        tgt_translated_texts = self.translate_one_step_batched(
+            src_translated_texts, self.tgt_tokenizer, self.tgt_model
+        )
 
         return tgt_translated_texts
 
-    def translate_one_step_batched(
-            self, data, tokenizer, model
-    ):
-        tokenized_texts = tokenizer(data, padding=True, truncation=True, return_tensors='pt')
+    def translate_one_step_batched(self, data, tokenizer, model):
+        tokenized_texts = tokenizer(
+            data, padding=True, truncation=True, return_tensors="pt"
+        )
         tokenized_dataset = t_data.TensorDataset(*(tokenized_texts.values()))
         tokenized_dataloader = t_data.DataLoader(
-            tokenized_dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-            num_workers=1
+            tokenized_dataset, batch_size=self.batch_size, shuffle=False, num_workers=1
         )
 
         all_translated_ids = []
@@ -64,19 +78,17 @@ class MtTransformers(LanguageModels):
                 input_ids, attention_mask = batch
 
                 translated_ids_batch = model.generate(
-                    input_ids=input_ids, attention_mask=attention_mask,
-                    max_length=self.max_length
+                    input_ids=input_ids,
+                    attention_mask=attention_mask,
+                    max_length=self.max_length,
                 )
 
-                all_translated_ids.append(
-                    translated_ids_batch.detach().cpu().numpy()
-                )
+                all_translated_ids.append(translated_ids_batch.detach().cpu().numpy())
 
         all_translated_texts = []
         for translated_ids_batch in all_translated_ids:
             translated_texts = tokenizer.batch_decode(
-                translated_ids_batch,
-                skip_special_tokens=True
+                translated_ids_batch, skip_special_tokens=True
             )
             all_translated_texts.extend(translated_texts)
 
