@@ -35,6 +35,17 @@ def init_back_translation_model(
 
 class BackTranslationAug(WordAugmenter):
     # https://arxiv.org/pdf/1511.06709.pdf
+    """
+    Augmenter that back translates the input text to augment the text. For example, if the input text is in English, it can be translated to another language (not necessarily the other language used for MT) and then translated back to English to generate augmented text. We use the Helsinki-NLP models and facebook/wmt19-en-de and facebook/wmt19-de-en for back translation.
+
+    :param str from_model_name: Any model from https://huggingface.co/models?filter=translation&search=Helsinki-NLP. As long as from_model_name matches with to_model_name. For example, if from_model_name is English to Japanese, then to_model_name should correspond to Japanese to English.
+    :param str to_model_name: Any model from https://huggingface.co/models?filter=translation&search=Helsinki-NLP.
+    :param str device: Default value is CPU. If value is CPU, it uses CPU for processing. If value is CUDA, it uses GPU for processing. Possible values include 'cuda' and 'cpu'. (May able to use other options)
+    :param bool force_reload: Force reload the contextual word embeddings model to memory when initialize the class.Default value is False and suggesting to keep it as False if performance is the consideration.
+    :param int batch_size: Batch size.
+    :param int max_length: The max length of output text.
+    :param str name: Name of this augmenter
+    """
 
     def __init__(
         self,
