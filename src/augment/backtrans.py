@@ -117,24 +117,32 @@ class ApplyBackTranslationAug:
         max_length=300,
         force_reload=False,
     ):
-        self.aug_lang1 = BackTranslationAug(
-            from_model_name=from_model1,
-            to_model_name=to_model1,
-            name="BackTranslationAug",
-            device=device,
-            batch_size=batch_size,
-            max_length=max_length,
-            force_reload=force_reload,
-        )
-        self.aug_lang2 = BackTranslationAug(
-            from_model_name=from_model2,
-            to_model_name=to_model2,
-            name="BackTranslationAug",
-            device=device,
-            batch_size=batch_size,
-            max_length=max_length,
-            force_reload=force_reload,
-        )
+        self.aug_lang1 = None
+        self.aug_lang2 = None
+        try:
+            self.aug_lang1 = BackTranslationAug(
+                from_model_name=from_model1,
+                to_model_name=to_model1,
+                name="BackTranslationAug",
+                device=device,
+                batch_size=batch_size,
+                max_length=max_length,
+                force_reload=force_reload,
+            )
+        except Exception as e:
+            print("lang1 backtranslation is None")
+        try:
+            self.aug_lang2 = BackTranslationAug(
+                from_model_name=from_model2,
+                to_model_name=to_model2,
+                name="BackTranslationAug",
+                device=device,
+                batch_size=batch_size,
+                max_length=max_length,
+                force_reload=force_reload,
+            )
+        except Exception as e:
+            print("lang2 backtranslation is None")
         self.l1 = l1
         self.l2 = l2
 
