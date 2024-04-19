@@ -1,5 +1,5 @@
-from wordaugmenter import WordAugmenter
-import mtmodels as mt
+from augment.wordaugmenter import WordAugmenter
+import augment.mtmodels as mt
 
 BACK_TRANSLATION_MODELS = {}
 
@@ -56,33 +56,35 @@ class BackTranslationAug(WordAugmenter):
 
 
 class ApplyBackTranslationAug:
-    def __init__(self, from_model1='facebook/wmt19-en-de', to_model1='facebook/wmt19-de-en', from_model2='facebook/wmt19-en-de', to_model2='facebook/wmt19-de-en', lang1='en', lang2='de', device='cpu', batch_size=32, max_length=300,
-                 force_reload=False, verbose=0):
-        self.aug_lang1 = BackTranslationAug(from_model_name=from_model1, to_model_name=to_model1,
+    def __init__(self, from_model1='facebook/wmt19-en-de', to_model1='facebook/wmt19-de-en', from_model2='facebook/wmt19-en-de', to_model2='facebook/wmt19-de-en', l1='fr', l2='en', device='cpu', batch_size=32, max_length=300, force_reload=False):
+        self.aug_lang1 = BackTranslationAug(from_model=from_model1, to_model=to_model1,
                                             name='BackTranslationAug', device=device, batch_size=batch_size,
                                             max_length=max_length, force_reload=force_reload)
-        self.aug_lang2 = BackTranslationAug(from_model_name=from_model2, to_model_name=to_model2,
+        self.aug_lang2 = BackTranslationAug(from_model=from_model2, to_model=to_model2,
                                             name='BackTranslationAug', device=device, batch_size=batch_size,
                                             max_length=max_length, force_reload=force_reload)
-        self.l1 = lang1
-        self.l2 = lang2
+        self.l1 = l1
+        self.l2 = l2
 
     def __call__(self, example):
-        original_translation = example['translation']
-
+        original_translation = example["translation"]
         if isinstance(original_translation, list):
             translations = []
             for translation in original_translation:
-                if isinstance(translation, dict) and self.l1 in translation and self.l2 in translation:
-                    text_lang1 = translation[self.l1]
-                    text_lang2 = translation[self.l2]
-
-                    augmented_lang1 = self.aug_lang1.substitute(text_lang1)
-                    augmented_lang2 = self.aug_lang2.substitute(text_lang2)
-
-                    translations.append({self.l1: augmented_lang1, self.l2: augmented_lang2})
+                if (
+                    isinstance(translation, dict)
+                ):
+                    en_text = translation[self.l1]
+                    fr_text = translation[self.l2]
+                    augmented_en = (
+                        self.aug_lang1.substitute(en_text)[0] if self.aug_lang1 else en_text
+                    )
+                    augmented_fr = (
+                        self.aug_lang2.substitute(fr_text)[0] if self.aug_lang1 else fr_text
+                    )
+                    translations.append({self.l1: augmented_en, self.l2: augmented_fr})
                 else:
                     translations.append(translation)
-            return {'translation': translations}
+            return {"translation": translations}
         else:
             return example

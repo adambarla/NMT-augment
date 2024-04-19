@@ -1,5 +1,7 @@
 import torch
 import torch.nn.functional as F
+from torch.utils import data as t_data
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 class LanguageModels:
     def __init__(self, device='cpu', silence=True):
@@ -10,15 +12,6 @@ class LanguageModels:
 
         self.device = device if device else 'cpu'
         self.silence = silence
-
-try:
-    import torch
-    from torch.utils import data as t_data
-    from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-except ImportError:
-    # No installation required if not using this function
-    pass
-
 
 class MtTransformers(LanguageModels):
     def __init__(self, src_model_name='facebook/wmt19-en-de', tgt_model_name='facebook/wmt19-de-en',
