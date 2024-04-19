@@ -313,10 +313,10 @@ class SynonymAug(WordAugmenter):
 class ApplySynonymAug:
     def __init__(
         self,
-        l1="en",
-        l2="fr",
-        lang1="eng",
-        lang2="fra",
+        l1="fr",
+        l2="en",
+        lang1="fra",
+        lang2="eng",
         aug_max=10,
         name="Synonym_Aug",
         aug_min=1,
@@ -327,10 +327,10 @@ class ApplySynonymAug:
         stopwords_regex=None,
         verbose=0,
     ):
-        self.aug_en = None
-        self.aug_fr = None
+        self.aug_lang1 = None
+        self.aug_lang2 = None
         try:
-            self.aug_en = SynonymAug(
+            self.aug_lang1 = SynonymAug(
                 name=name,
                 lang=lang1,
                 aug_min=aug_min,
@@ -345,7 +345,7 @@ class ApplySynonymAug:
         except ValueError:
             print(f"lang1 is set to {lang1}")
         try:
-            self.aug_fr = SynonymAug(
+            self.aug_lang2 = SynonymAug(
                 name=name,
                 lang=lang2,
                 aug_min=aug_min,
@@ -359,6 +359,7 @@ class ApplySynonymAug:
             )
         except ValueError:
             print(f"lang2 is set to {lang2}")
+
         self.l1 = l1
         self.l2 = l2
 
@@ -372,15 +373,19 @@ class ApplySynonymAug:
                     and self.l1 in translation
                     and self.l2 in translation
                 ):
-                    en_text = translation[self.l1]
-                    fr_text = translation[self.l2]
-                    augmented_en = (
-                        self.aug_en.substitute(en_text) if self.aug_en else en_text
+                    l1_text = translation[self.l1]
+                    l2_text = translation[self.l2]
+                    augmented_l1 = (
+                        self.aug_lang1.substitute(l1_text)
+                        if self.aug_lang1
+                        else l1_text
                     )
-                    augmented_fr = (
-                        self.aug_fr.substitute(fr_text) if self.aug_fr else fr_text
+                    augmented_l2 = (
+                        self.aug_lang2.substitute(l2_text)
+                        if self.aug_lang2
+                        else l2_text
                     )
-                    translations.append({self.l1: augmented_en, self.l2: augmented_fr})
+                    translations.append({self.l1: augmented_l1, self.l2: augmented_l2})
                 else:
                     translations.append(translation)
             return {"translation": translations}

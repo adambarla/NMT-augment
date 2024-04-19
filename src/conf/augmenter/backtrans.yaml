@@ -1,7 +1,7 @@
 _target_: augment.backtrans.ApplyBackTranslationAug
 l1: ${data.l1}
 l2: ${data.l2}
-from_model1: Helsinki-NLP/opus-mt-cs-en #https://huggingface.co/models?filter=translation&search=Helsinki-NLP
-to_model1: Helsinki-NLP/opus-mt-en-cs
+from_model1: Helsinki-NLP/opus-mt-fr-en # any appropriate model from https://huggingface.co/models?filter=translation&search=Helsinki-NLP (refer function description for more info)
+to_model1: Helsinki-NLP/opus-mt-en-fr # set either model name null to skip augmentation for the specific language
 from_model2: facebook/wmt19-en-de
 to_model2: facebook/wmt19-de-en

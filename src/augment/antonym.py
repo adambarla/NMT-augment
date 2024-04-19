@@ -370,10 +370,10 @@ class ApplyAntonymAug:
         reverse_tokenizer=None,
         stopwords_regex=None,
     ):
-        self.aug_en = None
-        self.aug_fr = None
+        self.aug_lang1 = None
+        self.aug_lang2 = None
         try:
-            self.aug_en = AntonymAug(
+            self.aug_lang1 = AntonymAug(
                 name=name,
                 lang=lang1,
                 aug_min=aug_min,
@@ -387,7 +387,7 @@ class ApplyAntonymAug:
         except ValueError:
             print(f"lang1 is set to {lang1}")
         try:
-            self.aug_fr = AntonymAug(
+            self.aug_lang2 = AntonymAug(
                 name=name,
                 lang=lang2,
                 aug_min=aug_min,
@@ -405,23 +405,29 @@ class ApplyAntonymAug:
 
     def __call__(self, example):
         original_translation = example["translation"]
+
         if isinstance(original_translation, list):
             translations = []
             for translation in original_translation:
+
                 if (
                     isinstance(translation, dict)
                     and self.l1 in translation
                     and self.l2 in translation
                 ):
-                    en_text = translation[self.l1]
-                    fr_text = translation[self.l2]
-                    augmented_en = (
-                        self.aug_en.substitute(en_text) if self.aug_en else en_text
+                    l1_text = translation[self.l1]
+                    l2_text = translation[self.l2]
+                    augmented_l1 = (
+                        self.aug_lang1.substitute(l1_text)
+                        if self.aug_lang1
+                        else l1_text
                     )
-                    augmented_fr = (
-                        self.aug_fr.substitute(fr_text) if self.aug_fr else fr_text
+                    augmented_l2 = (
+                        self.aug_lang2.substitute(l2_text)
+                        if self.aug_lang2
+                        else l2_text
                     )
-                    translations.append({self.l1: augmented_en, self.l2: augmented_fr})
+                    translations.append({self.l1: augmented_l1, self.l2: augmented_l2})
                 else:
                     translations.append(translation)
             return {"translation": translations}

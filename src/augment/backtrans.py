@@ -148,23 +148,26 @@ class ApplyBackTranslationAug:
 
     def __call__(self, example):
         original_translation = example["translation"]
+
         if isinstance(original_translation, list):
             translations = []
             for translation in original_translation:
+
                 if isinstance(translation, dict):
-                    en_text = translation[self.l1]
-                    fr_text = translation[self.l2]
-                    augmented_en = (
-                        self.aug_lang1.substitute(en_text)[0]
+                    l1_text = translation[self.l1]
+                    l2_text = translation[self.l2]
+
+                    augmented_l1 = (
+                        self.aug_lang1.substitute(l1_text)[0]
                         if self.aug_lang1
-                        else en_text
+                        else l1_text
                     )
-                    augmented_fr = (
-                        self.aug_lang2.substitute(fr_text)[0]
+                    augmented_l2 = (
+                        self.aug_lang2.substitute(l2_text)[0]
                         if self.aug_lang1
-                        else fr_text
+                        else l2_text
                     )
-                    translations.append({self.l1: augmented_en, self.l2: augmented_fr})
+                    translations.append({self.l1: augmented_l1, self.l2: augmented_l2})
                 else:
                     translations.append(translation)
             return {"translation": translations}
