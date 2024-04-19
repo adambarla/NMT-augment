@@ -1,3 +1,7 @@
 _target_: augment.backtrans.ApplyBackTranslationAug
 l1: ${data.l1}
 l2: ${data.l2}
+from_model1: Helsinki-NLP/opus-mt-cs-en
+to_model1: Helsinki-NLP/opus-mt-en-cs
+from_model2: facebook/wmt19-en-de
+to_model2: facebook/wmt19-de-en

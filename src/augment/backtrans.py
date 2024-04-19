@@ -107,8 +107,8 @@ class ApplyBackTranslationAug:
         force_reload=False,
     ):
         self.aug_lang1 = BackTranslationAug(
-            from_model=from_model1,
-            to_model=to_model1,
+            from_model_name=from_model1,
+            to_model_name=to_model1,
             name="BackTranslationAug",
             device=device,
             batch_size=batch_size,
@@ -116,8 +116,8 @@ class ApplyBackTranslationAug:
             force_reload=force_reload,
         )
         self.aug_lang2 = BackTranslationAug(
-            from_model=from_model2,
-            to_model=to_model2,
+            from_model_name=from_model2,
+            to_model_name=to_model2,
             name="BackTranslationAug",
             device=device,
             batch_size=batch_size,
