@@ -22,17 +22,15 @@ def get_subset(cfg, dataset):
 
 
 def get_augmented_subset(cfg, augmenter, dataset):
-
     subset = get_subset(cfg, dataset)
-    if augmenter is not None:
-        augmented_subset = subset.map(augmenter, batched=True, batch_size=1000)
-        dataset = concatenate_datasets([subset, augmented_subset])  # TODO
-    else:
-        dataset = subset
+    if augmenter is None:
+        return subset
+    augmented_subset = subset.map(augmenter, batched=True, batch_size=1000)
+    dataset = concatenate_datasets([subset, augmented_subset])  # TODO
     return dataset
 
 
-def get_dataloaders(cfg, tokenizer_l1, tokenizer_l2, augmenter, dataset):
+def get_loaders(cfg, tokenizer_l1, tokenizer_l2, augmenter, dataset):
     col_fn_args = partial(
         collate_fn,
         tokenizer_l1=tokenizer_l1,

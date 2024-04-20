@@ -19,3 +19,5 @@ sacrebleu==2.4.1
 nltk==3.8.1
 sacremoses==0.1.1
 sentencepiece==0.2.0
+evaluate==0.4.1
+rouge-score==0.1.2

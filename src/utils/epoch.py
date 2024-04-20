@@ -1,39 +1,49 @@
 import torch
-from sacrebleu import corpus_bleu
+import wandb
 from tqdm import tqdm
+from utils.metrics import calculate_metrics, log_metrics
 
 
-def epoch_train(model, loader, optimizer, criterion, device, accelerator):
+def epoch_train(model, loader, optimizer, scheduler, criterion, accelerator):
     epoch_loss = 0.0
-
     model.train()
-    with tqdm(total=len(loader), desc="Training Progress") as pbar:
+    with tqdm(total=len(loader), desc="train") as pbar:
         for i, batch in enumerate(loader):
             optimizer.zero_grad()
             inputs, targets = batch
-            inputs = inputs.transpose(0, 1).to(device)
-            targets = targets.transpose(0, 1).to(device)
+            inputs = inputs.transpose(0, 1).to(accelerator.device)
+            targets = targets.transpose(0, 1).to(accelerator.device)
             outputs = model(inputs, targets[:-1, :])
             loss = criterion(
                 outputs.reshape(-1, outputs.shape[-1]), targets[1:, :].reshape(-1)
             )
             accelerator.backward(loss)
             optimizer.step()
-            epoch_loss += accelerator.gather(loss.item())
-            pbar.set_description(f"Train Loss: {epoch_loss / (i + 1.0):.3f}")
+            scheduler.step()
+            if accelerator.is_main_process:
+                wandb.log(
+                    {"lr": scheduler.get_last_lr()[0]},
+                    step=scheduler.state_dict()["_step_count"],
+                )
+            epoch_loss += accelerator.gather(loss).mean().item()
+            pbar.set_description(f"train loss: {(epoch_loss / (i + 1.0)):.3f}")
             pbar.update(1)
-    return epoch_loss / len(loader)
+    if accelerator.is_main_process:
+        results = {"loss": epoch_loss / len(loader)}
+        log_metrics(results, "train", step=scheduler.state_dict()["_step_count"])
 
 
 def epoch_evaluate(
     model,
     loader,
     criterion,
-    device,
     accelerator,
     tokenizer_l1,
     tokenizer_l2,
+    metrics,
+    step,
     n_examples=3,
+    name="valid",
 ):
     epoch_loss = 0.0
     model.eval()
@@ -41,24 +51,29 @@ def epoch_evaluate(
     references = []
     inputs = None
     with torch.no_grad():
-        with tqdm(total=len(loader), desc="Valid") as pbar:
+        with tqdm(total=len(loader), desc=f"{name}") as pbar:
             for i, batch in enumerate(loader):
                 inputs, targets = batch
-                inputs = inputs.transpose(0, 1).to(device)  # L x B
-                targets = targets.transpose(0, 1).to(device)
+                inputs = inputs.transpose(0, 1).to(accelerator.device)  # L x B
+                targets = targets.transpose(0, 1).to(accelerator.device)
                 outputs = model(inputs, targets[:-1])  # L x B x V
                 loss = criterion(
                     outputs.reshape(-1, outputs.shape[-1]), targets[1:].reshape(-1)
                 )
-                epoch_loss += accelerator.gather(loss.item())
-                translations = model.translate(
-                    inputs, buffer=0.5, context_size=inputs.shape[0]
-                )
+                epoch_loss += accelerator.gather(loss).mean().item()
+                if isinstance(model, torch.nn.parallel.DistributedDataParallel):
+                    translations = model.module.translate(
+                        inputs, buffer=0.5, context_size=inputs.shape[0]
+                    )
+                else:
+                    translations = model.translate(
+                        inputs, buffer=0.5, context_size=inputs.shape[0]
+                    )
                 decoded_translations = tokenizer_l2.decode(translations.transpose(0, 1))
                 decoded_targets = tokenizer_l2.decode(targets.transpose(0, 1))
-                hypotheses += decoded_translations
-                references += decoded_targets
-                pbar.set_description(f"Valid Loss: {epoch_loss / (i + 1.0):.3f}")
+                hypotheses.extend(decoded_translations)
+                references.extend(decoded_targets)
+                pbar.set_description(f"{name:>5s} loss: {epoch_loss / (i + 1.0):.3f}")
                 pbar.update(1)
         for i in range(n_examples):
             print(
@@ -66,6 +81,11 @@ def epoch_evaluate(
                 f"target: {decoded_targets[i]}\n"
                 f"output: {decoded_translations[i]}",
             )
-    bleu_score = corpus_bleu(hypotheses, references).score
-    print(f"-\nBLEU score: {bleu_score:.2f}")
-    return epoch_loss / len(loader), bleu_score
+        print("-")
+    hypotheses = accelerator.gather_for_metrics(hypotheses)
+    references = accelerator.gather_for_metrics(references)
+    results = {"loss": epoch_loss / len(loader)}
+    if accelerator.is_main_process:
+        calculate_metrics(results, metrics, hypotheses, references)
+        log_metrics(results, name, step)
+    return results
