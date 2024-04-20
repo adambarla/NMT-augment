@@ -193,7 +193,6 @@ class SynonymAug(WordAugmenter):
         tokenizer=None,
         reverse_tokenizer=None,
         stopwords_regex=None,
-        verbose=0,
     ):
         super().__init__(
             aug_p=aug_p,
@@ -203,9 +202,7 @@ class SynonymAug(WordAugmenter):
             tokenizer=tokenizer,
             reverse_tokenizer=reverse_tokenizer,
             device="cpu",
-            verbose=verbose,
             stopwords_regex=stopwords_regex,
-            include_detail=False,
         )
         self.lang = lang
         self.model = self.get_model(lang)
@@ -325,7 +322,6 @@ class ApplySynonymAug:
         tokenizer=None,
         reverse_tokenizer=None,
         stopwords_regex=None,
-        verbose=0,
     ):
         self.aug_lang1 = None
         self.aug_lang2 = None
@@ -340,7 +336,6 @@ class ApplySynonymAug:
                 tokenizer=tokenizer,
                 reverse_tokenizer=reverse_tokenizer,
                 stopwords_regex=stopwords_regex,
-                verbose=verbose,
             )
         except ValueError:
             print(f"lang1 is set to {lang1}")
@@ -355,7 +350,6 @@ class ApplySynonymAug:
                 tokenizer=tokenizer,
                 reverse_tokenizer=reverse_tokenizer,
                 stopwords_regex=stopwords_regex,
-                verbose=verbose,
             )
         except ValueError:
             print(f"lang2 is set to {lang2}")

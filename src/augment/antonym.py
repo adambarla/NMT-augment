@@ -203,7 +203,6 @@ class AntonymAug(WordAugmenter):
             reverse_tokenizer=reverse_tokenizer,
             device="cpu",
             stopwords_regex=stopwords_regex,
-            include_detail=False,
         )
         self.lang = lang
         self.model = self.get_model(lang)
