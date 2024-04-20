@@ -83,14 +83,14 @@ def train(
 def main(cfg):
     print(f"Hydra configuration:\n{OmegaConf.to_yaml(cfg)}")
     set_deterministic(cfg.seed)
-    dataset = get_dataset(cfg)
-    augmenter = init_augmenter(cfg)
-    tok_l1, tok_l2 = init_tokenizers(cfg, dataset)
-    load_tr, load_va, load_te = get_loaders(cfg, tok_l1, tok_l2, augmenter, dataset)
     accelerator = init_accelerator(cfg)
     device = accelerator.device
     init_wandb(cfg, accelerator)
     print(f"Device: {device}")
+    dataset = get_dataset(cfg)
+    augmenter = init_augmenter(cfg)
+    tok_l1, tok_l2 = init_tokenizers(cfg, dataset)
+    load_tr, load_va, load_te = get_loaders(cfg, tok_l1, tok_l2, augmenter, dataset)
     model = init_model(cfg, tok_l1, tok_l2, device)
     optimizer = hydra.utils.instantiate(cfg.optimizer, model.parameters())
     print(f"Optimizer: {optimizer}")

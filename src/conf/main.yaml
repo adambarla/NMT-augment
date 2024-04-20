@@ -26,7 +26,7 @@ n_head: 8
 n_layer: 6
 vocab_size: 32000
 
-batch_size: 256
+batch_size: 128
 # length in 1. characters: 143.16(mean), 127(50th%), 253(90th%),   414(99th%)
 #           2. tokens, :   29.833(mean),  84(99th%), 146(99.9th%), 392(99.99th%); language czech, vocab size 32000
 max_length: 64
