@@ -49,14 +49,43 @@ which will start the tuning. This way the tuning can be done on multiple machine
 
 ## Data
 
-WMT 2014 English-to-German. WMT 2014 is a collection of datasets used in shared tasks of the Ninth Workshop on Statistical Machine Translation. WMT 2014 English-to-German is one of the most common datasets from WMT
-2014 for machine translation
+We use WMT 2014, a collection of datasets used in shared tasks of the Ninth Workshop on Statistical Machine Translation. WMT 2014 English-to-German, English-to-French are some of the most common datasets from WMT
+2014 for machine translation.
 
 ## Augmentation methods
 
-We implement four text augmentation methods to expand our dataset in a low-resource setting. These methods are aimed at increasing the diversity of the data and improving model generalization. To configure which augmentation method to use, you can specify the augmenter by its corresponding name `synonym`, `method2`, `method3`, `method4` or `no_aug`, if no augmentation is needed. 
+We implement three text augmentation methods to expand our dataset in a low-resource setting. These methods are aimed at increasing the diversity of the data and improving model generalization. To configure which augmentation method to use, you can specify the augmenter by its corresponding name `synonym`, `backtrans`, `antonym`, or `null`, if no augmentation is needed.
 
-1. **Synonym Replacement Augmentation**: This involves replacing words in the text with their synonyms while preserving the original meaning. This technique is inspired by the work on [Character-level Convolutional Networks for Text](https://arxiv.org/pdf/1509.01626.pdf).
-2. (Method 2 - to be edited later)
-3. (Method 3 - to be edited later)
-4. (Method 4 - to be edited later)
+1. **Synonym Replacement Augmentation**: This involves replacing words in the text with their synonyms while preserving the original meaning. This technique is inspired by the work on [Character-level Convolutional Networks for Text](https://arxiv.org/pdf/1509.01626.pdf). To specify the language for synonym replacement, include the `lang` argument followed by the language code (e.g., `eng` for English).
+
+   - To augment French text with synonyms:
+     ```
+     augmenter=synonym augmenter.synonym.lang1=fra
+     ```
+   - To augment English text with synonyms:
+     ```
+     augmenter=synonym augmenter.synonym.lang2=eng
+     ```
+
+2. **Back Translation Augmentation**: Back translation involves translating the text from one language to another that may not necessarily correspond to the secondary language in the model, and then back to the original language. This can introduce variations in the text while retaining its semantic meaning. This method was first proposed in [Improving Neural Machine Translation Models with Monolingual Data](https://aclanthology.org/P16-1009/). To specify the language pair for back translation, use the `from_model` and `to_model` arguments followed by the corresponding model names. If one of the model names is set to `null`, only the other language will be augmented.
+
+   - To augment French text using the specified translation models:
+     ```
+     augmenter=backtrans augmenter.backtrans.from_model1=Helsinki-NLP/opus-mt-fr-en augmenter.backtrans.to_model1=Helsinki-NLP/opus-mt-en-fr
+     ```
+   - To augment English text using the specified translation models:
+     ```
+     augmenter=backtrans augmenter.backtrans.from_model2=facebook/wmt19-en-de augmenter.backtrans.to_model2=facebook/wmt19-de-en
+     ```
+
+3. **Antonym Replacement Augmentation**: This method replaces words in the text with their antonyms, altering the meaning while preserving the structure of the sentence. To specify the language for antonym replacement, include the `lang` argument with the language code (e.g., `eng` for English). If one of the languages is set to `null`, only the other language will be augmented.
+
+   - To augment French text with antonyms:
+     ```
+     augmenter=antonym augmenter.antonym.lang1=fra
+     ```
+   - To augment English text with antonyms:
+     ```
+     augmenter=antonym augmenter.antonym.lang2=eng
+     ```
+     

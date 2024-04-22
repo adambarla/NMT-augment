@@ -163,7 +163,7 @@ class WordNet(WordDictionary):
         return results
 
 
-class SynonymAug(WordAugmenter):
+class AntonymAug(WordAugmenter):
     # https://arxiv.org/pdf/1809.02079.pdf
     """
     Augmenter that leverage semantic meaning to substitute word.
@@ -184,7 +184,7 @@ class SynonymAug(WordAugmenter):
 
     def __init__(
         self,
-        name="synonym",
+        name="antonym",
         aug_min=1,
         aug_max=10,
         aug_p=0.3,
@@ -210,15 +210,27 @@ class SynonymAug(WordAugmenter):
     def skip_aug(self, token_idxes, tokens):
         results = []
         for token_idx in token_idxes:
-            to_be_keep = True
 
-            # Some words do not come with synonym/ antonym. They will be excluded
-            if tokens[token_idx][1] in ["DT"]:  # TODO
-
+            if tokens[token_idx][1] not in [
+                "VB",
+                "VBD",
+                "VBZ",
+                "VBG",
+                "VBN",
+                "VBP",
+                "JJ",
+                "JJR",
+                "JJS",
+                "RB",
+                "RBR",
+                "RBS",
+            ]:
                 continue
 
-            if to_be_keep:
-                results.append(token_idx)
+            if len(self.get_candidates(tokens, token_idx)) == 0:
+                continue
+
+            results.append(token_idx)
         return results
 
     def substitute(self, data):
@@ -230,24 +242,20 @@ class SynonymAug(WordAugmenter):
 
         pos = self.model.pos_tag(original_tokens)
 
-        aug_idxes = self._get_aug_idxes(pos)
+        aug_candidates = self._get_aug_idxes(pos)
+        if aug_candidates is None or len(aug_candidates) == 0:
+            return data
+
+        aug_idxes, candidates = zip(*aug_candidates)
         if aug_idxes is None or len(aug_idxes) == 0:
             return data
 
-        for aug_idx in aug_idxes:
-            original_token = original_tokens[aug_idx]
+        for aug_idx, original_token in enumerate(original_tokens):
+            # Skip if no augment for word
+            if aug_idx not in aug_idxes:
+                continue
 
-            word_poses = PartOfSpeech.constituent2pos(pos[aug_idx][1])
-
-            candidates = []
-            if word_poses is None or len(word_poses) == 0:
-                # Use every possible words as the mapping does not defined correctly
-                candidates.extend(self.model.predict(pos[aug_idx][0]))
-            else:
-                for word_pos in word_poses:
-                    candidates.extend(self.model.predict(pos[aug_idx][0], pos=word_pos))
-
-            candidates = [c for c in candidates if c.lower() != original_token.lower()]
+            candidates = self.get_candidates(pos, aug_idx)
 
             if len(candidates) > 0:
                 candidate = self.sample(candidates, 1)[0]
@@ -264,7 +272,7 @@ class SynonymAug(WordAugmenter):
 
     @classmethod
     def get_model(cls, lang):
-        return WordNet(lang=lang, is_synonym=True)
+        return WordNet(lang=lang, is_synonym=False)
 
     def generate_aug_cnt(self, size):
         if self.aug_max is not None:
@@ -278,10 +286,48 @@ class SynonymAug(WordAugmenter):
         word_idxes = self.skip_aug(word_idxes, tokens)
         if len(word_idxes) == 0:
             return None
-        if len(word_idxes) < aug_cnt:
-            aug_cnt = len(word_idxes)
-        aug_idexes = self.sample(word_idxes, aug_cnt)
+
+        aug_idexes = []
+        for aug_idx in word_idxes:
+            word_poses = PartOfSpeech.constituent2pos(tokens[aug_idx][1])
+            candidates = []
+            if word_poses is None or len(word_poses) == 0:
+                candidates.extend(self.model.predict(tokens[aug_idx][0]))
+            else:
+                for word_pos in word_poses:
+                    candidates.extend(
+                        self.model.predict(tokens[aug_idx][0], pos=word_pos)
+                    )
+
+            candidates = [
+                c for c in candidates if c.lower() != tokens[aug_idx][0].lower()
+            ]
+
+            if len(candidates) > 0:
+                candidate = self.sample(candidates, 1)[0]
+                aug_idexes.append((aug_idx, candidate))
+
+        if len(aug_idexes) < aug_cnt:
+            aug_cnt = len(aug_idexes)
+
+        aug_idexes = self.sample(aug_idexes, aug_cnt)
         return aug_idexes
+
+    def get_candidates(self, tokens, token_idx):
+        original_token = tokens[token_idx][0]
+        word_poses = PartOfSpeech.constituent2pos(tokens[token_idx][1])
+        candidates = []
+        if word_poses is None or len(word_poses) == 0:
+            # Use every possible words as the mapping does not defined correctly
+            candidates.extend(self.model.predict(tokens[token_idx][0]))
+        else:
+            for word_pos in word_poses:
+                candidates.extend(
+                    self.model.predict(tokens[token_idx][0], pos=word_pos)
+                )
+
+        candidates = [c for c in candidates if c.lower() != original_token.lower()]
+        return candidates
 
     def pre_skip_aug(self, tokens):
         results = []
@@ -307,7 +353,7 @@ class SynonymAug(WordAugmenter):
             return substitute_token
 
 
-class ApplySynonymAug:
+class ApplyAntonymAug:
     def __init__(
         self,
         l1="fr",
@@ -315,7 +361,7 @@ class ApplySynonymAug:
         lang1="fra",
         lang2="eng",
         aug_max=10,
-        name="Synonym_Aug",
+        name="Antonym_Aug",
         aug_min=1,
         aug_p=0.3,
         stopwords=None,
@@ -326,7 +372,7 @@ class ApplySynonymAug:
         self.aug_lang1 = None
         self.aug_lang2 = None
         try:
-            self.aug_lang1 = SynonymAug(
+            self.aug_lang1 = AntonymAug(
                 name=name,
                 lang=lang1,
                 aug_min=aug_min,
@@ -340,7 +386,7 @@ class ApplySynonymAug:
         except ValueError:
             print(f"lang1 is set to {lang1}")
         try:
-            self.aug_lang2 = SynonymAug(
+            self.aug_lang2 = AntonymAug(
                 name=name,
                 lang=lang2,
                 aug_min=aug_min,
@@ -353,15 +399,16 @@ class ApplySynonymAug:
             )
         except ValueError:
             print(f"lang2 is set to {lang2}")
-
         self.l1 = l1
         self.l2 = l2
 
     def __call__(self, example):
         original_translation = example["translation"]
+
         if isinstance(original_translation, list):
             translations = []
             for translation in original_translation:
+
                 if (
                     isinstance(translation, dict)
                     and self.l1 in translation
