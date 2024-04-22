@@ -1,7 +1,7 @@
 _target_: augment.antonym.ApplyAntonymAug
 l1: ${data.l1}
 l2: ${data.l2}
-lang1: null
+lang1: fra
 lang2: eng
 aug_min: 1
 aug_max: 10
