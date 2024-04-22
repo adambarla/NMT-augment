@@ -60,32 +60,32 @@ We implement three text augmentation methods to expand our dataset in a low-reso
 
    - To augment French text with synonyms:
      ```
-     augmenter=synonym augmenter.synonym.lang1=fra
+     augmenter=synonym augmenter.lang1=fra
      ```
    - To augment English text with synonyms:
      ```
-     augmenter=synonym augmenter.synonym.lang2=eng
+     augmenter=synonym augmenter.lang2=eng
      ```
 
 2. **Back Translation Augmentation**: Back translation involves translating the text from one language to another that may not necessarily correspond to the secondary language in the model, and then back to the original language. This can introduce variations in the text while retaining its semantic meaning. This method was first proposed in [Improving Neural Machine Translation Models with Monolingual Data](https://aclanthology.org/P16-1009/). To specify the language pair for back translation, use the `from_model` and `to_model` arguments followed by the corresponding model names. If one of the model names is set to `null`, only the other language will be augmented.
 
    - To augment French text using the specified translation models:
      ```
-     augmenter=backtrans augmenter.backtrans.from_model1=Helsinki-NLP/opus-mt-fr-en augmenter.backtrans.to_model1=Helsinki-NLP/opus-mt-en-fr
+     augmenter=backtrans augmenter.from_model1=Helsinki-NLP/opus-mt-fr-en augmenter.to_model1=Helsinki-NLP/opus-mt-en-fr
      ```
    - To augment English text using the specified translation models:
      ```
-     augmenter=backtrans augmenter.backtrans.from_model2=facebook/wmt19-en-de augmenter.backtrans.to_model2=facebook/wmt19-de-en
+     augmenter=backtrans augmenter.from_model2=facebook/wmt19-en-de augmenter.to_model2=facebook/wmt19-de-en
      ```
 
 3. **Antonym Replacement Augmentation**: This method replaces words in the text with their antonyms, altering the meaning while preserving the structure of the sentence. To specify the language for antonym replacement, include the `lang` argument with the language code (e.g., `eng` for English). If one of the languages is set to `null`, only the other language will be augmented.
 
    - To augment French text with antonyms:
      ```
-     augmenter=antonym augmenter.antonym.lang1=fra
+     augmenter=antonym augmenter.lang1=fra
      ```
    - To augment English text with antonyms:
      ```
-     augmenter=antonym augmenter.antonym.lang2=eng
+     augmenter=antonym augmenter.lang2=eng
      ```
      
