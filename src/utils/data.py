@@ -25,10 +25,12 @@ def get_augmented_subset(cfg, augmenter, dataset):
     subset = get_subset(cfg, dataset)
     if augmenter is None:
         return subset
-    augmented_subset = subset.map(augmenter, batched=True, batch_size=1000, load_from_cache_file=False)
-    dataset = concatenate_datasets([subset, augmented_subset])  # TODO
+    elif  str(type(augmenter))=="<class 'augment.backtrans.ApplyBackTranslationAug'>":
+      augmented_subset = augmenter(subset,cfg.batch_size)
+    else: 
+      augmented_subset = subset.map(augmenter, batched=True, batch_size=1000, load_from_cache_file=False)
+    dataset = concatenate_datasets([subset, augmented_subset])
     return dataset
-
 
 def get_loaders(cfg, tokenizer_l1, tokenizer_l2, augmenter, dataset):
     col_fn_args = partial(

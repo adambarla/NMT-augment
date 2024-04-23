@@ -1,8 +1,8 @@
+from datasets import Dataset, Translation, Features, Value
 from augment.wordaugmenter import WordAugmenter
 import augment.mtmodels as mt
 
 BACK_TRANSLATION_MODELS = {}
-
 
 def init_back_translation_model(
     from_model_name,
@@ -53,7 +53,7 @@ class BackTranslationAug(WordAugmenter):
         to_model_name="facebook/wmt19-de-en",
         name="BackTranslationAug",
         device="cpu",
-        batch_size=32,
+        batch_size=256,
         max_length=300,
         force_reload=False,
     ):
@@ -90,7 +90,7 @@ class BackTranslationAug(WordAugmenter):
         to_model_name,
         device="cuda",
         force_reload=False,
-        batch_size=32,
+        batch_size=128,
         max_length=None,
     ):
         return init_back_translation_model(
@@ -146,30 +146,39 @@ class ApplyBackTranslationAug:
         self.l1 = l1
         self.l2 = l2
 
-    def __call__(self, example):
-        original_translation = example["translation"]
+    def __call__(self, subset, batch_size=32):
+        new_samples=[]
+        dataset_features = Features({
+            'translation': Translation(languages=[self.l1, self.l2])
+        })
+        examples_list = subset['translation']
 
-        if isinstance(original_translation, list):
-            translations = []
-            for translation in original_translation:
+        l1_texts = [example[self.l1] for example in examples_list]
+        l2_texts = [example[self.l2] for example in examples_list]
+        
+        for i in range(0, len(l1_texts), batch_size):
+            batchl1 = l1_texts[i:i + batch_size]
+            batchl2 = l2_texts[i:i + batch_size]
 
-                if isinstance(translation, dict):
-                    l1_text = translation[self.l1]
-                    l2_text = translation[self.l2]
+            originall1 = batchl1
+            originall2 = batchl2
 
-                    augmented_l1 = (
-                        self.aug_lang1.substitute(l1_text)[0]
-                        if self.aug_lang1
-                        else l1_text
-                    )
-                    augmented_l2 = (
-                        self.aug_lang2.substitute(l2_text)[0]
-                        if self.aug_lang1
-                        else l2_text
-                    )
-                    translations.append({self.l1: augmented_l1, self.l2: augmented_l2})
-                else:
-                    translations.append(translation)
-            return {"translation": translations}
-        else:
-            return example
+            if isinstance(batchl1, list) and isinstance(batchl2, list): 
+              augmented_l1 = (
+                  self.aug_lang1.substitute(originall1)
+                  if self.aug_lang1
+                  else originall1
+              )
+              augmented_l2 = (
+                  self.aug_lang2.substitute(originall2)
+                  if self.aug_lang1
+                  else originall2
+              )
+              paired_examples = list(zip(augmented_l1, augmented_l2))
+
+            else:
+              paired_examples = list(zip(batchl1, batchl2))
+            
+            new_samples += [{self.l1: l1_text, self.l2: l2_text} for l1_text, l2_text in paired_examples]
+
+        return Dataset.from_dict({'translation': new_samples}, features=dataset_features)
